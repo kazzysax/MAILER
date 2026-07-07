@@ -1,0 +1,45 @@
+services:
+  - type: web
+    name: mailer-platform
+    runtime: node
+    plan: starter
+    region: oregon
+    buildCommand: npm install
+    startCommand: npm start
+    disk:
+      name: mailer-data
+      mountPath: /opt/render/project/src
+      sizeGB: 1
+    envVars:
+      - key: PORT
+        value: 8080
+      - key: BASE_URL
+        sync: false
+      - key: SERVER_SECRET
+        sync: false
+      - key: ANTHROPIC_API_KEY
+        sync: false
+      - key: TELEGRAM_BOT_TOKEN
+        sync: false
+      - key: TELEGRAM_BOT_USERNAME
+        sync: false
+      - key: TWILIO_ACCOUNT_SID
+        sync: false
+      - key: TWILIO_AUTH_TOKEN
+        sync: false
+      - key: TWILIO_WHATSAPP_FROM
+        sync: false
+      - key: POLL_SECONDS
+        value: 60
+      - key: PUSH_NORMAL
+        value: true
+      - key: DIGEST_HOUR
+        value: 8
+      - key: NUDGE_DAYS
+        value: 3
+      - key: OPENAI_API_KEY
+        sync: false
+      - key: FORWARD_MAIL_USER
+        sync: false
+      - key: FORWARD_MAIL_PASSWORD
+        sync: false
