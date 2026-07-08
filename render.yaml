@@ -2,14 +2,10 @@ services:
   - type: web
     name: mailer-platform
     runtime: node
-    plan: starter
+    plan: free
     region: oregon
     buildCommand: npm install
     startCommand: npm start
-    disk:
-      name: mailer-data
-      mountPath: /opt/render/project/src
-      sizeGB: 1
     envVars:
       - key: PORT
         value: 8080
