@@ -44,6 +44,13 @@ app.listen(config.port, () => console.log(`MAILER platform up at ${config.baseUr
 /* ---------- the one official bot ---------- */
 startTelegramBot();
 
+/* ---------- self-ping heartbeat (keeps free-tier host awake) ---------- */
+if (config.baseUrl.startsWith("http") && !config.baseUrl.includes("localhost")) {
+  setInterval(() => {
+    fetch(config.baseUrl).catch(() => {});
+  }, 30 * 1000);
+}
+
 /* ---------- inbox poll loop (all users) ---------- */
 let polling = false;
 async function pollAll() {
