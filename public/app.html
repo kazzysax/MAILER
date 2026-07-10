@@ -10,8 +10,8 @@
 body{margin:0;background:#0F1420;color:#E8ECF4;font-family:'Inter',sans-serif;font-size:14px;min-height:100vh}
 .wrap{max-width:820px;margin:0 auto;padding:24px 18px 80px}
 header{display:flex;align-items:center;gap:10px;margin-bottom:26px}
-.logo{width:36px;height:36px;display:inline-flex;align-items:center;justify-content:center;border-radius:9px;overflow:hidden;box-shadow:0 4px 14px -4px rgba(232,90,27,.45);padding:0}
-.logo img{width:100%;height:100%;object-fit:cover;display:block}
+.logo{width:38px;height:38px;display:inline-flex;align-items:center;justify-content:center;border-radius:10px;overflow:hidden;background:#0a0a0a;border:1px solid rgba(255,107,44,.22);box-shadow:0 6px 18px -6px rgba(232,90,27,.55);padding:0}
+.logo img{width:100%;height:100%;object-fit:cover;display:block;transform:scale(1.06)}
 .name{font-family:'Space Grotesk';font-weight:700;font-size:22px;letter-spacing:2px}
 .tag{color:#7C879C;font-size:12px;margin-left:4px}
 header .right{margin-left:auto;display:flex;gap:10px;align-items:center}
@@ -59,7 +59,7 @@ code{background:#0F1420;border:1px solid #232B3E;padding:1px 6px;border-radius:5
 <body>
 <div class="wrap">
   <header>
-    <span class="logo"><img src="assets/mailer-logo.jpeg" alt="MAILER" width="36" height="36"></span><span class="name">MAILER</span><span class="tag">Never miss an email.</span>
+    <span class="logo"><img src="assets/mailer-logo.jpeg?v=3" alt="MAILER" width="36" height="36"></span><span class="name">MAILER</span><span class="tag">Never miss an email.</span>
     <div class="right hidden" id="userbar">
       <span class="dim small" id="useremail"></span>
       <button onclick="logout()">Log out</button>
