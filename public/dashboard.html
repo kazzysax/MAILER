@@ -23,8 +23,6 @@ body{background:
 .mono{font-family:'JetBrains Mono',monospace;letter-spacing:0}
 a{color:inherit;text-decoration:none}
 button{font-family:inherit;cursor:pointer}
-
-/* top bar */
 .topbar{position:sticky;top:0;z-index:40;background:rgba(0,0,0,.9);backdrop-filter:blur(16px);border-bottom:1px solid var(--line)}
 .topbar-inner{max-width:1220px;margin:0 auto;padding:0 24px;height:62px;display:flex;align-items:center;gap:16px}
 .brand{display:flex;align-items:center;gap:10px;font-weight:900;font-size:18px;letter-spacing:.04em}
@@ -46,141 +44,87 @@ button{font-family:inherit;cursor:pointer}
 .acct-head{padding:11px;border-bottom:1px solid var(--line);margin-bottom:5px}
 .acct-head .em{font-size:13px;font-weight:700}
 .acct-head .sub{font-size:11.5px;color:var(--muted-2);margin-top:2px}
-.acct-menu a{display:flex;align-items:center;gap:10px;padding:9px 11px;border-radius:7px;font-size:13px;color:var(--muted)}
-.acct-menu a:hover{background:var(--ink-3);color:var(--paper)}
-
+.acct-menu a,.acct-menu button{display:flex;align-items:center;gap:10px;padding:9px 11px;border-radius:7px;font-size:13px;color:var(--muted);width:100%;background:none;border:none;text-align:left}
+.acct-menu a:hover,.acct-menu button:hover{background:var(--ink-3);color:var(--paper)}
 .shell{max-width:1220px;margin:0 auto;padding:22px 24px 60px;display:flex;gap:20px;align-items:flex-start}
 .main{flex:1;min-width:0}
-
-/* ---------- priority + template sidebar (vertical, left) ---------- */
 .sidebar{width:260px;flex-shrink:0;display:flex;flex-direction:column;gap:12px;position:sticky;top:84px}
-@media(max-width:900px){.shell{flex-direction:column}.sidebar{width:100%;position:static;flex-direction:row}}
-@media(max-width:760px){.sidebar{flex-direction:column}}
-.bar{background:var(--ink-2);border:1px solid var(--line);border-radius:10px;overflow:hidden;transition:border-color .2s}
-.bar:hover{border-color:var(--line-2)}
+@media(max-width:900px){.shell{flex-direction:column}.sidebar{width:100%;position:static}}
+.bar{background:var(--ink-2);border:1px solid var(--line);border-radius:10px;overflow:hidden}
 .bar-head{display:flex;align-items:center;gap:10px;padding:12px 15px;cursor:pointer;user-select:none}
-.bar-head .bic{font-size:15px}
-.bar-head h4{font-weight:700;font-size:13.5px;letter-spacing:-.01em}
+.bar-head h4{font-weight:700;font-size:13.5px}
 .bar-head .cnt{margin-left:auto;font-family:'JetBrains Mono';font-size:11px;color:var(--muted-2);background:var(--ink);border:1px solid var(--line);padding:1px 8px;border-radius:20px}
 .bar-head .chev-b{font-size:11px;color:var(--muted-2);transition:transform .25s}
 .bar.open .chev-b{transform:rotate(180deg)}
 .bar-body{max-height:0;overflow:hidden;transition:max-height .3s ease}
-.bar.open .bar-body{max-height:360px}
+.bar.open .bar-body{max-height:420px}
 .bar-body-inner{padding:0 15px 15px}
 .mini-row{display:flex;gap:6px;margin-bottom:9px;flex-wrap:wrap}
 .mini-row select,.mini-row input{background:var(--ink);border:1px solid var(--line);color:var(--paper);border-radius:7px;padding:8px 9px;font-family:'Satoshi';font-size:12px}
-.mini-row select{cursor:pointer}
 .mini-row input{flex:1;min-width:70px}
 .mini-add{background:var(--ink-3);border:1px solid var(--line);color:var(--paper);border-radius:7px;padding:0 12px;font-size:16px;font-weight:600}
-.mini-add:hover{border-color:var(--amber)}
 .chip{display:flex;align-items:center;gap:8px;background:var(--ink);border:1px solid var(--line);border-radius:7px;padding:7px 10px;font-size:12px;margin-bottom:6px}
-.chip .x{margin-left:auto;color:var(--muted-2);cursor:pointer}
-.chip .x:hover{color:var(--paper)}
+.chip .x{margin-left:auto;color:var(--muted-2);cursor:pointer;background:none;border:none}
 .pill{font-family:'JetBrains Mono';font-size:9px;letter-spacing:.04em;text-transform:uppercase;padding:2px 7px;border-radius:4px;font-weight:500}
 .pill.high{background:var(--amber-soft);color:var(--amber)}
-.pill.med{background:#2a2a16;color:#c9c05a}
+.pill.normal,.pill.med{background:#2a2a16;color:#c9c05a}
 .pill.low{background:var(--ink-3);color:var(--muted)}
 .tmpl{background:var(--ink);border:1px solid var(--line);border-radius:7px;padding:8px 10px;font-size:12px;margin-bottom:6px;display:flex;align-items:center;gap:8px}
-.tmpl .x{margin-left:auto;color:var(--muted-2);cursor:pointer}
-textarea{width:100%;background:var(--ink);border:1px solid var(--line);color:var(--paper);border-radius:7px;padding:8px 10px;font-family:'Satoshi';font-size:12px;resize:vertical;margin-bottom:8px}
+.tmpl .x{margin-left:auto;color:var(--muted-2);cursor:pointer;background:none;border:none}
+textarea,.tname{width:100%;background:var(--ink);border:1px solid var(--line);color:var(--paper);border-radius:7px;padding:8px 10px;font-family:'Satoshi';font-size:12px;margin-bottom:8px}
+textarea{resize:vertical}
 textarea:focus,.mini-row input:focus,.mini-row select:focus,.tname:focus{outline:none;border-color:var(--amber)}
-.tname{width:100%;background:var(--ink);border:1px solid var(--line);color:var(--paper);border-radius:7px;padding:8px 10px;font-size:12px;margin-bottom:8px;font-family:'Satoshi'}
 .btn-sm{width:100%;background:var(--amber);color:var(--ink);border:none;border-radius:7px;padding:8px;font-weight:700;font-size:12px}
 .btn-sm:hover{background:#ff7f47}
-
-/* main head */
 .main-head{display:flex;align-items:center;gap:14px;margin-bottom:18px;flex-wrap:wrap}
 .main-head h1{font-weight:900;font-size:23px;letter-spacing:-.03em}
 .main-head .meta{font-family:'JetBrains Mono';font-size:11.5px;color:var(--muted-2)}
 .search{margin-left:auto;display:flex;align-items:center;gap:8px;background:var(--ink-2);border:1px solid var(--line);border-radius:8px;padding:7px 12px;min-width:210px}
 .search input{background:none;border:none;color:var(--paper);font-size:13px;width:100%;outline:none;font-family:'Satoshi'}
-.search svg{opacity:.5}
-
-/* sliding tabs */
 .tabs{display:flex;gap:4px;background:var(--ink-2);border:1px solid var(--line);border-radius:10px;padding:4px;margin-bottom:20px;position:relative}
-.tab{flex:1;position:relative;z-index:2;display:flex;align-items:center;justify-content:center;gap:8px;padding:10px 14px;border:none;background:none;color:var(--muted);font-size:13.5px;font-weight:700;border-radius:7px;transition:color .25s;letter-spacing:-.01em}
-.tab .ic{font-size:14px}
+.tab{flex:1;position:relative;z-index:2;display:flex;align-items:center;justify-content:center;gap:8px;padding:10px 14px;border:none;background:none;color:var(--muted);font-size:13.5px;font-weight:700;border-radius:7px}
 .tab .count{font-family:'JetBrains Mono';font-size:10.5px;background:var(--ink);border:1px solid var(--line);padding:1px 7px;border-radius:20px;color:var(--muted)}
 .tab.active{color:var(--paper)}
 .tab.active .count{background:var(--amber-soft);color:var(--amber);border-color:var(--amber-soft)}
 .tab-glider{position:absolute;top:4px;bottom:4px;background:var(--ink-3);border:1px solid var(--line-2);border-radius:7px;transition:transform .32s cubic-bezier(.4,.1,.2,1),width .32s;z-index:1}
-
-.slides{position:relative}
 .slide{display:none;animation:sf .35s ease both}
 .slide.show{display:block}
 @keyframes sf{from{opacity:0;transform:translateX(10px)}to{opacity:1;transform:translateX(0)}}
-
 .group-label{font-family:'JetBrains Mono';font-size:10.5px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted-2);margin:22px 0 11px;display:flex;align-items:center;gap:10px}
 .group-label::after{content:"";flex:1;height:1px;background:var(--line)}
 .group-label:first-child{margin-top:0}
-
-/* ---------- MAIL — styled like an actual letter ---------- */
-.mailrow{position:relative;background:
-    linear-gradient(var(--ink-2),var(--ink-2)) padding-box,
-    var(--ink-2);
-  border:1px solid var(--line);border-radius:10px;margin-bottom:11px;transition:transform .18s ease,border-color .18s ease,box-shadow .18s;
-}
+.mailrow{position:relative;background:var(--ink-2);border:1px solid var(--line);border-radius:10px;margin-bottom:11px}
 .mailrow:hover{transform:translateX(3px);border-color:var(--line-2);box-shadow:-3px 0 0 0 var(--stripe,var(--muted-2))}
-/* left "stamp" edge like a real envelope stripe */
 .mailrow::before{content:"";position:absolute;left:0;top:10px;bottom:10px;width:3px;border-radius:3px;background:var(--stripe,var(--muted-2))}
 .mailrow.high{--stripe:var(--amber)}
-.mailrow.med{--stripe:#c9c05a}
+.mailrow.normal,.mailrow.med{--stripe:#c9c05a}
 .mailrow.low{--stripe:var(--muted-2)}
-.mailrow.paid{--stripe:var(--teal)}
 .mailrow.risk{--stripe:var(--red)}
-/* perforated top edge — the "envelope" cue */
-.mailrow::after{content:"";position:absolute;left:14px;right:14px;top:0;height:1px;background:repeating-linear-gradient(90deg,var(--line-2) 0 6px,transparent 6px 12px);opacity:0}
-.mailrow.open::after{opacity:.5}
-
 .mail-head{display:flex;align-items:center;gap:14px;padding:14px 17px 14px 20px;cursor:pointer}
-.stamp{width:44px;height:48px;border:1.5px dashed var(--line-2);border-radius:6px;display:flex;flex-direction:column;align-items:center;justify-content:center;flex-shrink:0;background:var(--ink);position:relative}
-.stamp .mo{font-family:'JetBrains Mono';font-size:9px;color:var(--muted-2);letter-spacing:.05em;text-transform:uppercase}
+.stamp{width:44px;height:48px;border:1.5px dashed var(--line-2);border-radius:6px;display:flex;flex-direction:column;align-items:center;justify-content:center;flex-shrink:0;background:var(--ink)}
+.stamp .mo{font-family:'JetBrains Mono';font-size:9px;color:var(--muted-2);text-transform:uppercase}
 .stamp .da{font-family:'JetBrains Mono';font-weight:700;font-size:17px;color:var(--paper);line-height:1}
 .mail-main{flex:1;min-width:0}
-.mail-l1{display:flex;align-items:center;gap:9px;margin-bottom:3px}
-.mail-sender{font-size:13.5px;font-weight:700;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;letter-spacing:-.01em}
+.mail-l1{display:flex;align-items:center;gap:9px;margin-bottom:3px;flex-wrap:wrap}
+.mail-sender{font-size:13.5px;font-weight:700;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .mail-email{font-family:'JetBrains Mono';font-size:10.5px;color:var(--muted-2)}
 .mail-sum{font-size:13px;color:var(--muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .mail-right{display:flex;align-items:center;gap:12px;flex-shrink:0}
-.mail-amt{font-family:'JetBrains Mono';font-size:12.5px;font-weight:700}
-.mail-amt.neg{color:var(--amber)}
-.mail-amt.pos{color:var(--teal)}
 .chev{color:var(--muted-2);transition:transform .25s;font-size:12px}
 .mailrow.open .chev{transform:rotate(180deg)}
-@media(max-width:620px){.mail-sum{display:none}.mail-email{display:none}}
-
 .mail-body{max-height:0;overflow:hidden;transition:max-height .3s ease}
-.mailrow.open .mail-body{max-height:420px}
+.mailrow.open .mail-body{max-height:480px}
 .mail-body-inner{padding:4px 17px 17px 81px}
 .bfield{display:flex;gap:12px;margin-bottom:10px;font-size:13px}
 .bfield .k{font-family:'JetBrains Mono';font-size:10px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted-2);width:74px;flex-shrink:0;padding-top:2px}
 .bfield .v{color:var(--paper);flex:1}
-.bfield .v.mono{font-family:'JetBrains Mono';font-size:11.5px}
 .action-line{background:var(--ink);border:1px solid var(--amber-soft);border-radius:7px;padding:9px 12px;font-size:12.5px;color:var(--amber);margin:11px 0}
 .risk-line{background:var(--red-soft);border:1px solid var(--red);border-radius:7px;padding:9px 12px;font-size:12px;color:var(--red);margin:11px 0}
-.mail-actions{display:flex;gap:7px;margin-top:13px;flex-wrap:wrap}
-.ma{background:var(--ink-3);border:1px solid var(--line);color:var(--paper);border-radius:7px;padding:7px 13px;font-size:12px;font-weight:500}
-.ma:hover{border-color:var(--amber)}
-.ma.primary{background:var(--amber);border-color:var(--amber);color:var(--ink);font-weight:700}
-.ma.primary:hover{background:#ff7f47}
-
-/* category */
-.cat-card{background:var(--ink-2);border:1px solid var(--line);border-radius:var(--radius);margin-bottom:13px;overflow:hidden}
-.cat-head{display:flex;align-items:center;gap:11px;padding:13px 16px;border-bottom:1px solid var(--line)}
-.cat-ic{width:32px;height:32px;border-radius:8px;display:grid;place-items:center;font-size:16px;background:var(--ink-3);border:1px solid var(--line)}
-.cat-head h3{font-weight:700;font-size:14px;letter-spacing:-.01em}
-.cat-head .cnt{margin-left:auto;font-family:'JetBrains Mono';font-size:10.5px;color:var(--muted-2)}
-.cat-body{padding:12px 14px}
-.cat-body .mailrow:last-child{margin-bottom:0}
-
-/* tier */
+.empty{padding:40px 20px;text-align:center;color:var(--muted);font-size:14px;background:var(--ink-2);border:1px dashed var(--line);border-radius:10px}
 .tier-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:13px}
 @media(max-width:820px){.tier-grid{grid-template-columns:1fr}}
 .tier-col{background:var(--ink-2);border:1px solid var(--line);border-radius:var(--radius);overflow:hidden}
-.tier-head{padding:12px 15px;border-bottom:1px solid var(--line);display:flex;align-items:center;gap:9px;font-weight:700;font-size:13.5px;letter-spacing:-.01em}
-.tier-head.high{background:linear-gradient(180deg,rgba(229,160,60,.09),transparent)}
-.tier-head.med{background:linear-gradient(180deg,rgba(201,192,90,.07),transparent)}
-.tier-head.low{background:linear-gradient(180deg,rgba(132,150,174,.05),transparent)}
+.tier-head{padding:12px 15px;border-bottom:1px solid var(--line);display:flex;align-items:center;gap:9px;font-weight:700;font-size:13.5px}
 .tier-head .dot{width:8px;height:8px;border-radius:50%}
 .tier-head.high .dot{background:var(--amber)}
 .tier-head.med .dot{background:#c9c05a}
@@ -188,11 +132,11 @@ textarea:focus,.mini-row input:focus,.mini-row select:focus,.tname:focus{outline
 .tier-head .cnt{margin-left:auto;font-family:'JetBrains Mono';font-size:10.5px;color:var(--muted-2)}
 .tier-body{padding:11px}
 .tcard{background:var(--ink);border:1px solid var(--line);border-radius:8px;padding:11px 12px;margin-bottom:8px}
-.tcard:last-child{margin-bottom:0}
 .tcard .tc-top{display:flex;align-items:center;justify-content:space-between;margin-bottom:5px}
 .tcard .tc-sender{font-size:12.5px;font-weight:700}
 .tcard .tc-date{font-family:'JetBrains Mono';font-size:10px;color:var(--muted-2)}
 .tcard .tc-sum{font-size:12px;color:var(--muted);line-height:1.4}
+.hidden{display:none}
 </style>
 </head>
 <body>
@@ -201,24 +145,22 @@ textarea:focus,.mini-row input:focus,.mini-row select:focus,.tname:focus{outline
   <div class="topbar-inner">
     <div class="brand"><span class="logo"><svg viewBox="0 0 120 100" xmlns="http://www.w3.org/2000/svg"><defs><linearGradient id="mailerGrad" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#FFB25C"/><stop offset="1" stop-color="#E85A1B"/></linearGradient></defs><polygon points="8,8 34,8 96,92 70,92" fill="url(#mailerGrad)"/><polygon points="92,8 66,8 4,92 30,92" fill="url(#mailerGrad)"/><rect x="56" y="36" width="48" height="42" rx="9" fill="#C4501C"/><polygon points="56,40 80,64 104,40 104,45 80,70 56,45" fill="#F6ECDD"/><rect x="71" y="51" width="4" height="17" fill="#F6ECDD"/><rect x="78" y="51" width="4" height="17" fill="#F6ECDD"/><rect x="85" y="51" width="4" height="17" fill="#F6ECDD"/></svg></span>MAILER</div>
     <div class="top-right">
-      <div class="conn on"><span class="dot"></span><span class="label">Telegram</span></div>
-      <div class="conn off"><span class="dot"></span><span class="label">WhatsApp</span></div>
+      <div class="conn off" id="conn-tg"><span class="dot"></span><span class="label">Telegram</span></div>
+      <div class="conn off" id="conn-wa"><span class="dot"></span><span class="label">WhatsApp</span></div>
       <div class="acct">
-        <button class="acct-btn" onclick="document.getElementById('acctMenu').classList.toggle('open')">
-          <span class="avatar">M</span>
-          <span class="mono" style="font-size:12px">meridian@biz.com</span>
+        <button class="acct-btn" type="button" onclick="document.getElementById('acctMenu').classList.toggle('open')">
+          <span class="avatar" id="avatar">?</span>
+          <span class="mono" style="font-size:12px" id="userEmail">…</span>
           <span style="color:var(--muted-2);font-size:10px">▾</span>
         </button>
         <div class="acct-menu" id="acctMenu">
           <div class="acct-head">
-            <div class="em mono">meridian@biz.com</div>
-            <div class="sub">Inbox connected · Gmail</div>
+            <div class="em mono" id="menuEmail">—</div>
+            <div class="sub" id="menuSub">Loading…</div>
           </div>
-          <a href="#">⚙️ Account settings</a>
-          <a href="#">📥 Manage inbox connection</a>
-          <a href="#">💬 Chat connections</a>
-          <a href="#">🌙 Quiet hours</a>
-          <a href="index.html" style="color:var(--red)">↳ Sign out</a>
+          <a href="setup.html">⚙️ Setup / connect channels</a>
+          <a href="app.html">🧰 Classic control panel</a>
+          <button type="button" onclick="logout()" style="color:var(--red)">↳ Sign out</button>
         </div>
       </div>
     </div>
@@ -226,268 +168,278 @@ textarea:focus,.mini-row input:focus,.mini-row select:focus,.tname:focus{outline
 </div>
 
 <div class="shell">
-
-  <!-- priority + template SIDEBAR (vertical, left) -->
   <div class="sidebar">
-    <div class="bar">
-      <div class="bar-head" onclick="this.parentElement.classList.toggle('open')"><span class="bic">📊</span><h4>Priorities</h4><span class="cnt" id="prCount">3</span><span class="chev-b">▾</span></div>
+    <div class="bar open">
+      <div class="bar-head" onclick="this.parentElement.classList.toggle('open')"><span class="bic">📊</span><h4>Priorities</h4><span class="cnt" id="prCount">0</span><span class="chev-b">▾</span></div>
       <div class="bar-body"><div class="bar-body-inner">
         <div class="mini-row">
           <select id="pType"><option value="keyword">Keyword</option><option value="sender">Sender</option><option value="domain">Domain</option></select>
-          <select id="pLevel"><option value="high">High</option><option value="med">Med</option><option value="low">Low</option></select>
+          <select id="pLevel"><option value="high">High</option><option value="low">Low</option></select>
         </div>
         <div class="mini-row">
           <input id="pValue" placeholder="value e.g. invoice">
-          <button class="mini-add" onclick="addPriority()">+</button>
+          <button class="mini-add" type="button" onclick="addPriority()">+</button>
         </div>
-        <div id="prList">
-          <div class="chip"><span class="pill high">High</span>invoice<span class="x" onclick="delChip(this)">×</span></div>
-          <div class="chip"><span class="pill high">High</span>urgent<span class="x" onclick="delChip(this)">×</span></div>
-          <div class="chip"><span class="pill low">Low</span>newsletter<span class="x" onclick="delChip(this)">×</span></div>
-        </div>
+        <div id="prList"></div>
       </div></div>
     </div>
-
     <div class="bar">
-      <div class="bar-head" onclick="this.parentElement.classList.toggle('open')"><span class="bic">📄</span><h4>Templates</h4><span class="cnt" id="tmCount">2</span><span class="chev-b">▾</span></div>
+      <div class="bar-head" onclick="this.parentElement.classList.toggle('open')"><span class="bic">📄</span><h4>Templates</h4><span class="cnt" id="tmCount">0</span><span class="chev-b">▾</span></div>
       <div class="bar-body"><div class="bar-body-inner">
         <input id="tName" class="tname mono" placeholder="Template name">
-        <textarea id="tBody" rows="2" placeholder="Hi [name], regarding invoice [number]…"></textarea>
-        <button class="btn-sm" onclick="addTemplate()">Save template</button>
-        <div id="tmList" style="margin-top:10px">
-          <div class="tmpl">📄 Payment reminder<span class="x" onclick="this.parentElement.remove()">×</span></div>
-          <div class="tmpl">📄 Quote follow-up<span class="x" onclick="this.parentElement.remove()">×</span></div>
-        </div>
+        <textarea id="tBody" rows="2" placeholder="Hi [name], regarding…"></textarea>
+        <button class="btn-sm" type="button" onclick="addTemplate()">Save template</button>
+        <div id="tmList" style="margin-top:10px"></div>
       </div></div>
     </div>
   </div>
 
   <div class="main">
-
-  <div class="main-head">
-    <h1>Inbox</h1>
-    <span class="meta">Fri 03 Jul · 12 open</span>
-    <div class="search">
-      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="m21 21-4-4"/></svg>
-      <input placeholder="Search email…">
-    </div>
-  </div>
-
-  <div class="tabs" id="tabs">
-    <button class="tab active" data-slide="0"><span class="ic">📨</span>Emails <span class="count">12</span></button>
-    <button class="tab" data-slide="1"><span class="ic">🗂️</span>Category <span class="count">4</span></button>
-    <button class="tab" data-slide="2"><span class="ic">📊</span>Tier <span class="count">3</span></button>
-    <div class="tab-glider" id="glider"></div>
-  </div>
-
-  <div class="slides">
-
-    <!-- SLIDE 1: EMAILS -->
-    <div class="slide show" id="slide-0">
-      <div class="group-label">Today</div>
-
-      <div class="mailrow high" onclick="toggle(this)">
-        <div class="mail-head">
-          <div class="stamp"><span class="mo">Jul</span><span class="da">03</span></div>
-          <div class="mail-main">
-            <div class="mail-l1"><span class="pill high">High</span><span class="mail-sender">Meridian Accounts</span><span class="mail-email mono">accounts@meridian.co</span></div>
-            <div class="mail-sum">Invoice #2214 is overdue — final notice before service pause.</div>
-          </div>
-          <div class="mail-right"><span class="mail-amt neg">-$4,000</span><span class="chev">▾</span></div>
-        </div>
-        <div class="mail-body"><div class="mail-body-inner">
-          <div class="bfield"><span class="k">From</span><span class="v mono">accounts@meridian.co</span></div>
-          <div class="bfield"><span class="k">Received</span><span class="v">Fri 03 Jul 2026, 09:12</span></div>
-          <div class="bfield"><span class="k">Summary</span><span class="v">Meridian is chasing invoice #2214 for the third time. Tone has hardened — they warn service will pause if unpaid by Friday.</span></div>
-          <div class="action-line">➡️ Pay or dispute invoice #2214 ($4,000) before Fri 03 Jul.</div>
-          <div class="bfield"><span class="k">Attach</span><span class="v mono">📎 Invoice_2214.pdf</span></div>
-          <div class="mail-actions">
-            <button class="ma primary" onclick="event.stopPropagation()">✍️ Draft reply</button>
-            <button class="ma" onclick="event.stopPropagation()">📄 Use template</button>
-            <button class="ma" onclick="event.stopPropagation()">⏰ Snooze</button>
-            <button class="ma" onclick="event.stopPropagation()">✓ Done</button>
-          </div>
-        </div></div>
-      </div>
-
-      <div class="mailrow risk" onclick="toggle(this)">
-        <div class="mail-head">
-          <div class="stamp"><span class="mo">Jul</span><span class="da">03</span></div>
-          <div class="mail-main">
-            <div class="mail-l1"><span class="pill high">High</span><span class="mail-sender">Billing Security</span><span class="mail-email mono">secure@paypa1-verify.xyz</span></div>
-            <div class="mail-sum">Your account is suspended — verify now to avoid closure.</div>
-          </div>
-          <div class="mail-right"><span class="chev">▾</span></div>
-        </div>
-        <div class="mail-body"><div class="mail-body-inner">
-          <div class="bfield"><span class="k">From</span><span class="v mono">secure@paypa1-verify.xyz</span></div>
-          <div class="bfield"><span class="k">Received</span><span class="v">Fri 03 Jul 2026, 08:40</span></div>
-          <div class="bfield"><span class="k">Summary</span><span class="v">Claims your account is suspended and pushes an urgent “verify now” link.</span></div>
-          <div class="risk-line">⚠️ Possible scam · risk 92% — lookalike domain, urgency, credential-phishing link. MAILER had a security agent check this sender. Verify before acting.</div>
-          <div class="mail-actions">
-            <button class="ma" onclick="event.stopPropagation()">🚫 Mark spam</button>
-            <button class="ma" onclick="event.stopPropagation()">✓ Done</button>
-          </div>
-        </div></div>
-      </div>
-
-      <div class="mailrow paid" onclick="toggle(this)">
-        <div class="mail-head">
-          <div class="stamp"><span class="mo">Jul</span><span class="da">03</span></div>
-          <div class="mail-main">
-            <div class="mail-l1"><span class="pill low">Info</span><span class="mail-sender">Paystack</span><span class="mail-email mono">noreply@paystack.com</span></div>
-            <div class="mail-sum">Payment received — order #8841 confirmed.</div>
-          </div>
-          <div class="mail-right"><span class="mail-amt pos">+$1,250</span><span class="chev">▾</span></div>
-        </div>
-        <div class="mail-body"><div class="mail-body-inner">
-          <div class="bfield"><span class="k">From</span><span class="v mono">noreply@paystack.com</span></div>
-          <div class="bfield"><span class="k">Received</span><span class="v">Fri 03 Jul 2026, 07:55</span></div>
-          <div class="bfield"><span class="k">Summary</span><span class="v">Confirms a $1,250 payment for order #8841 has settled.</span></div>
-          <div class="mail-actions"><button class="ma" onclick="event.stopPropagation()">✓ Done</button></div>
-        </div></div>
-      </div>
-
-      <div class="group-label">Yesterday</div>
-
-      <div class="mailrow med" onclick="toggle(this)">
-        <div class="mail-head">
-          <div class="stamp"><span class="mo">Jul</span><span class="da">02</span></div>
-          <div class="mail-main">
-            <div class="mail-l1"><span class="pill med">Med</span><span class="mail-sender">Tunde Oduya</span><span class="mail-email mono">t.oduya@client.io</span></div>
-            <div class="mail-sum">Requesting a revised quote for the Q3 retainer.</div>
-          </div>
-          <div class="mail-right"><span class="chev">▾</span></div>
-        </div>
-        <div class="mail-body"><div class="mail-body-inner">
-          <div class="bfield"><span class="k">From</span><span class="v mono">t.oduya@client.io</span></div>
-          <div class="bfield"><span class="k">Received</span><span class="v">Thu 02 Jul 2026, 16:20</span></div>
-          <div class="bfield"><span class="k">Summary</span><span class="v">Tunde wants an updated quote for the Q3 retainer, scope slightly expanded.</span></div>
-          <div class="action-line">➡️ Send a revised Q3 retainer quote.</div>
-          <div class="mail-actions">
-            <button class="ma primary" onclick="event.stopPropagation()">✍️ Draft reply</button>
-            <button class="ma" onclick="event.stopPropagation()">📄 Use template</button>
-            <button class="ma" onclick="event.stopPropagation()">✓ Done</button>
-          </div>
-        </div></div>
-      </div>
-
-      <div class="mailrow low" onclick="toggle(this)">
-        <div class="mail-head">
-          <div class="stamp"><span class="mo">Jul</span><span class="da">02</span></div>
-          <div class="mail-main">
-            <div class="mail-l1"><span class="pill low">Low</span><span class="mail-sender">Ada — Customer</span><span class="mail-email mono">ada.k@gmail.com</span></div>
-            <div class="mail-sum">Complaint: order arrived damaged, wants a replacement.</div>
-          </div>
-          <div class="mail-right"><span class="chev">▾</span></div>
-        </div>
-        <div class="mail-body"><div class="mail-body-inner">
-          <div class="bfield"><span class="k">From</span><span class="v mono">ada.k@gmail.com</span></div>
-          <div class="bfield"><span class="k">Received</span><span class="v">Thu 02 Jul 2026, 11:05</span></div>
-          <div class="bfield"><span class="k">Summary</span><span class="v">Ada's order #8790 arrived damaged. She's frustrated and wants a replacement shipped.</span></div>
-          <div class="action-line">➡️ Arrange a replacement for order #8790.</div>
-          <div class="mail-actions">
-            <button class="ma primary" onclick="event.stopPropagation()">✍️ Draft reply</button>
-            <button class="ma" onclick="event.stopPropagation()">✓ Done</button>
-          </div>
-        </div></div>
+    <div class="main-head">
+      <h1 id="viewTitle">Inbox</h1>
+      <span class="meta" id="viewMeta">Loading…</span>
+      <div class="search">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="m21 21-4-4"/></svg>
+        <input id="search" placeholder="Search email…" oninput="renderEmails()">
       </div>
     </div>
 
-    <!-- SLIDE 2: CATEGORY -->
-    <div class="slide" id="slide-1">
-      <div class="cat-card">
-        <div class="cat-head"><span class="cat-ic">💰</span><h3>Payment slips</h3><span class="cnt">2 emails</span></div>
-        <div class="cat-body">
-          <div class="mailrow paid" onclick="toggle(this)"><div class="mail-head"><div class="stamp"><span class="mo">Jul</span><span class="da">03</span></div><div class="mail-main"><div class="mail-l1"><span class="mail-sender">Paystack</span><span class="mail-email mono">noreply@paystack.com</span></div><div class="mail-sum">Payment received — order #8841 confirmed.</div></div><div class="mail-right"><span class="mail-amt pos">+$1,250</span><span class="chev">▾</span></div></div><div class="mail-body"><div class="mail-body-inner"><div class="bfield"><span class="k">Summary</span><span class="v">$1,250 payment for order #8841 has settled.</span></div></div></div></div>
-          <div class="mailrow paid" onclick="toggle(this)"><div class="mail-head"><div class="stamp"><span class="mo">Jul</span><span class="da">01</span></div><div class="mail-main"><div class="mail-l1"><span class="mail-sender">Flutterwave</span><span class="mail-email mono">alerts@flutterwave.com</span></div><div class="mail-sum">Payout of $820 processed to your account.</div></div><div class="mail-right"><span class="mail-amt pos">+$820</span><span class="chev">▾</span></div></div><div class="mail-body"><div class="mail-body-inner"><div class="bfield"><span class="k">Summary</span><span class="v">A $820 payout has been processed to your settlement account.</span></div></div></div></div>
-        </div>
-      </div>
-      <div class="cat-card">
-        <div class="cat-head"><span class="cat-ic">📣</span><h3>Customer complaints</h3><span class="cnt">1 email</span></div>
-        <div class="cat-body">
-          <div class="mailrow low" onclick="toggle(this)"><div class="mail-head"><div class="stamp"><span class="mo">Jul</span><span class="da">02</span></div><div class="mail-main"><div class="mail-l1"><span class="pill low">Low</span><span class="mail-sender">Ada K.</span><span class="mail-email mono">ada.k@gmail.com</span></div><div class="mail-sum">Order arrived damaged, wants a replacement.</div></div><div class="mail-right"><span class="chev">▾</span></div></div><div class="mail-body"><div class="mail-body-inner"><div class="bfield"><span class="k">Summary</span><span class="v">Order #8790 arrived damaged; customer wants a replacement.</span></div><div class="action-line">➡️ Arrange a replacement for order #8790.</div></div></div></div>
-        </div>
-      </div>
-      <div class="cat-card">
-        <div class="cat-head"><span class="cat-ic">📝</span><h3>Requests</h3><span class="cnt">1 email</span></div>
-        <div class="cat-body">
-          <div class="mailrow med" onclick="toggle(this)"><div class="mail-head"><div class="stamp"><span class="mo">Jul</span><span class="da">02</span></div><div class="mail-main"><div class="mail-l1"><span class="pill med">Med</span><span class="mail-sender">Tunde Oduya</span><span class="mail-email mono">t.oduya@client.io</span></div><div class="mail-sum">Revised quote for the Q3 retainer.</div></div><div class="mail-right"><span class="chev">▾</span></div></div><div class="mail-body"><div class="mail-body-inner"><div class="bfield"><span class="k">Summary</span><span class="v">Wants an updated Q3 retainer quote, scope expanded.</span></div></div></div></div>
-        </div>
-      </div>
-      <div class="cat-card">
-        <div class="cat-head"><span class="cat-ic">⚠️</span><h3>Flagged / spam</h3><span class="cnt">1 email</span></div>
-        <div class="cat-body">
-          <div class="mailrow risk" onclick="toggle(this)"><div class="mail-head"><div class="stamp"><span class="mo">Jul</span><span class="da">03</span></div><div class="mail-main"><div class="mail-l1"><span class="mail-sender">Billing Security</span><span class="mail-email mono">secure@paypa1-verify.xyz</span></div><div class="mail-sum">Account suspended — verify now.</div></div><div class="mail-right"><span class="chev">▾</span></div></div><div class="mail-body"><div class="mail-body-inner"><div class="risk-line">⚠️ Possible scam · risk 92% — lookalike domain and phishing link.</div></div></div></div>
-        </div>
-      </div>
+    <div class="tabs" id="tabs">
+      <button class="tab active" data-slide="0" type="button"><span class="ic">📨</span>Emails <span class="count" id="cntEmails">0</span></button>
+      <button class="tab" data-slide="1" type="button"><span class="ic">📊</span>Tier <span class="count" id="cntTiers">3</span></button>
+      <div class="tab-glider" id="glider"></div>
     </div>
 
-    <!-- SLIDE 3: TIER -->
-    <div class="slide" id="slide-2">
-      <div class="tier-grid">
-        <div class="tier-col">
-          <div class="tier-head high"><span class="dot"></span>High tier<span class="cnt">2</span></div>
-          <div class="tier-body">
-            <div class="tcard"><div class="tc-top"><span class="tc-sender">Meridian Accounts</span><span class="tc-date">Jul 03</span></div><div class="tc-sum">Invoice #2214 overdue — $4,000 due Friday.</div></div>
-            <div class="tcard"><div class="tc-top"><span class="tc-sender">Bank Alert</span><span class="tc-date">Jul 01</span></div><div class="tc-sum">Large withdrawal flagged for review.</div></div>
-          </div>
-        </div>
-        <div class="tier-col">
-          <div class="tier-head med"><span class="dot"></span>Medium tier<span class="cnt">2</span></div>
-          <div class="tier-body">
-            <div class="tcard"><div class="tc-top"><span class="tc-sender">Tunde Oduya</span><span class="tc-date">Jul 02</span></div><div class="tc-sum">Revised Q3 retainer quote requested.</div></div>
-            <div class="tcard"><div class="tc-top"><span class="tc-sender">Supplier Co</span><span class="tc-date">Jul 01</span></div><div class="tc-sum">Delivery schedule confirmation needed.</div></div>
-          </div>
-        </div>
-        <div class="tier-col">
-          <div class="tier-head low"><span class="dot"></span>Low tier<span class="cnt">3</span></div>
-          <div class="tier-body">
-            <div class="tcard"><div class="tc-top"><span class="tc-sender">Ada K.</span><span class="tc-date">Jul 02</span></div><div class="tc-sum">Damaged order complaint.</div></div>
-            <div class="tcard"><div class="tc-top"><span class="tc-sender">Weekly Digest</span><span class="tc-date">Jul 02</span></div><div class="tc-sum">Industry newsletter — 6 stories.</div></div>
-            <div class="tcard"><div class="tc-top"><span class="tc-sender">LinkedIn</span><span class="tc-date">Jul 01</span></div><div class="tc-sum">5 new notifications.</div></div>
-          </div>
-        </div>
-      </div>
-      <div style="text-align:center;margin-top:16px;font-size:12px;color:var(--muted-2)">Tiers follow your priority rules · adjust them in the Priorities panel on the left</div>
+    <div class="slides">
+      <div class="slide show" id="slide-0"></div>
+      <div class="slide" id="slide-1"></div>
     </div>
-
-  </div>
   </div>
 </div>
 
 <script>
-function toggle(row){ row.classList.toggle('open'); }
-const tabs=document.querySelectorAll('.tab');
-const glider=document.getElementById('glider');
-function moveGlider(el){ glider.style.width=el.offsetWidth+'px'; glider.style.transform='translateX('+el.offsetLeft+'px)'; }
-function selectTab(el){
-  tabs.forEach(t=>t.classList.remove('active')); el.classList.add('active'); moveGlider(el);
-  const idx=+el.dataset.slide;
-  document.querySelectorAll('.slide').forEach((s,i)=>s.classList.toggle('show', i===idx));
-  document.querySelector('.main-head h1').textContent=['Inbox','By category','By tier'][idx];
+const $ = (id) => document.getElementById(id);
+let emails = [];
+let me = null;
+
+async function api(path, opts = {}) {
+  const res = await fetch('/api' + path, {
+    headers: { 'content-type': 'application/json' },
+    credentials: 'same-origin',
+    ...opts,
+    body: opts.body ? JSON.stringify(opts.body) : undefined,
+  });
+  const data = await res.json().catch(() => ({}));
+  if (!res.ok) throw new Error(data.error || ('Request failed: ' + res.status));
+  return data;
 }
-tabs.forEach(t=>t.addEventListener('click',()=>selectTab(t)));
-window.addEventListener('load',()=>moveGlider(document.querySelector('.tab.active')));
-window.addEventListener('resize',()=>moveGlider(document.querySelector('.tab.active')));
-function addPriority(){
-  const t=document.getElementById('pType').value,v=document.getElementById('pValue').value.trim(),l=document.getElementById('pLevel').value;
-  if(!v)return; const lbl=l==='high'?'High':l==='med'?'Med':'Low';
-  const c=document.createElement('div'); c.className='chip';
-  c.innerHTML=`<span class="pill ${l}">${lbl}</span>${v}<span class="x" onclick="delChip(this)">×</span>`;
-  document.getElementById('prList').appendChild(c); document.getElementById('pValue').value='';
-  document.getElementById('prCount').textContent=document.querySelectorAll('#prList .chip').length;
+
+function escapeHtml(s) {
+  const d = document.createElement('div');
+  d.textContent = s || '';
+  return d.innerHTML;
 }
-function delChip(x){x.parentElement.remove();document.getElementById('prCount').textContent=document.querySelectorAll('#prList .chip').length;}
-function addTemplate(){
-  const n=document.getElementById('tName').value.trim(); if(!n)return;
-  const t=document.createElement('div'); t.className='tmpl';
-  t.innerHTML=`📄 ${n}<span class="x" onclick="this.parentElement.remove()">×</span>`;
-  document.getElementById('tmList').appendChild(t);
-  document.getElementById('tName').value='';document.getElementById('tBody').value='';
-  document.getElementById('tmCount').textContent=document.querySelectorAll('#tmList .tmpl').length;
+
+function toggle(row) { row.classList.toggle('open'); }
+
+function monthDay(iso) {
+  if (!iso) return { mo: '—', da: '—' };
+  const d = new Date(iso);
+  if (Number.isNaN(d.getTime())) return { mo: '—', da: '—' };
+  return {
+    mo: d.toLocaleString('en', { month: 'short' }),
+    da: String(d.getDate()).padStart(2, '0'),
+  };
 }
-document.addEventListener('click',e=>{const a=document.querySelector('.acct');if(!a.contains(e.target))document.getElementById('acctMenu').classList.remove('open');});
+
+function senderName(from) {
+  if (!from) return 'Unknown';
+  const m = String(from).match(/^"?([^"<]+)"?\s*</);
+  return (m ? m[1] : from).trim().slice(0, 40) || 'Unknown';
+}
+
+function priClass(p) {
+  p = (p || 'normal').toLowerCase();
+  if (p === 'high') return 'high';
+  if (p === 'low') return 'low';
+  return 'normal';
+}
+
+async function logout() {
+  try { await api('/logout', { method: 'POST' }); } catch {}
+  location.href = 'setup.html';
+}
+
+async function boot() {
+  try {
+    me = await api('/me');
+  } catch {
+    location.href = 'setup.html';
+    return;
+  }
+
+  $('userEmail').textContent = me.email;
+  $('menuEmail').textContent = me.email;
+  $('avatar').textContent = (me.email || '?')[0].toUpperCase();
+  $('menuSub').textContent = me.inboxConnected
+    ? ('Inbox connected · ' + (me.inboxUser || ''))
+    : 'Inbox not connected';
+
+  $('conn-tg').className = 'conn ' + (me.telegramLinked ? 'on' : 'off');
+  $('conn-wa').className = 'conn ' + (me.whatsappNumber ? 'on' : 'off');
+
+  await Promise.all([loadRules(), loadTemplates(), loadEmails()]);
+}
+
+async function loadRules() {
+  const rules = await api('/rules');
+  const list = $('prList');
+  list.innerHTML = '';
+  $('prCount').textContent = rules.length;
+  for (const r of rules) {
+    const chip = document.createElement('div');
+    chip.className = 'chip';
+    chip.innerHTML = `<span class="pill ${r.level}">${r.level}</span>${escapeHtml(r.value)}`;
+    const x = document.createElement('button');
+    x.className = 'x'; x.type = 'button'; x.textContent = '×';
+    x.onclick = async () => { await api('/rules/' + r.id, { method: 'DELETE' }); loadRules(); };
+    chip.appendChild(x);
+    list.appendChild(chip);
+  }
+}
+
+async function addPriority() {
+  const value = $('pValue').value.trim();
+  if (!value) return;
+  try {
+    await api('/rules', {
+      method: 'POST',
+      body: { type: $('pType').value, value, level: $('pLevel').value },
+    });
+    $('pValue').value = '';
+    loadRules();
+  } catch (e) { alert(e.message); }
+}
+
+async function loadTemplates() {
+  const t = await api('/templates');
+  const list = $('tmList');
+  list.innerHTML = '';
+  $('tmCount').textContent = t.length;
+  for (const x of t) {
+    const row = document.createElement('div');
+    row.className = 'tmpl';
+    row.innerHTML = `📄 ${escapeHtml(x.name)}`;
+    const del = document.createElement('button');
+    del.className = 'x'; del.type = 'button'; del.textContent = '×';
+    del.onclick = async () => { await api('/templates/' + x.id, { method: 'DELETE' }); loadTemplates(); };
+    row.appendChild(del);
+    list.appendChild(row);
+  }
+}
+
+async function addTemplate() {
+  try {
+    await api('/templates', {
+      method: 'POST',
+      body: { name: $('tName').value, content: $('tBody').value },
+    });
+    $('tName').value = '';
+    $('tBody').value = '';
+    loadTemplates();
+  } catch (e) { alert(e.message); }
+}
+
+async function loadEmails() {
+  emails = await api('/emails');
+  renderEmails();
+}
+
+function filteredEmails() {
+  const q = ($('search').value || '').toLowerCase().trim();
+  if (!q) return emails;
+  return emails.filter(e =>
+    (e.subject || '').toLowerCase().includes(q) ||
+    (e.from || '').toLowerCase().includes(q) ||
+    (e.summary || '').toLowerCase().includes(q)
+  );
+}
+
+function renderEmails() {
+  const list = filteredEmails();
+  $('cntEmails').textContent = list.length;
+  $('viewMeta').textContent = list.length + ' email' + (list.length === 1 ? '' : 's');
+
+  const slide0 = $('slide-0');
+  if (!list.length) {
+    slide0.innerHTML = '<div class="empty">Nothing processed yet — send a test email to your connected inbox, or finish setup.</div>';
+  } else {
+    slide0.innerHTML = list.map(e => {
+      const { mo, da } = monthDay(e.receivedAt || e.received_at);
+      const pri = priClass(e.priority);
+      const risk = e.scamRisk || e.scam_risk;
+      const riskHtml = risk
+        ? `<div class="risk-line">⚠️ Possible scam · risk ${Math.round(Number(risk) * (Number(risk) <= 1 ? 100 : 1))}%${e.scamReasons || e.scam_reasons ? ' — ' + escapeHtml(e.scamReasons || e.scam_reasons) : ''}</div>`
+        : '';
+      const action = e.action ? `<div class="action-line">➡️ ${escapeHtml(e.action)}</div>` : '';
+      return `<div class="mailrow ${pri}${risk ? ' risk' : ''}" onclick="toggle(this)">
+        <div class="mail-head">
+          <div class="stamp"><span class="mo">${mo}</span><span class="da">${da}</span></div>
+          <div class="mail-main">
+            <div class="mail-l1"><span class="pill ${pri}">${pri}</span><span class="mail-sender">${escapeHtml(senderName(e.from))}</span><span class="mail-email mono">${escapeHtml(e.from || '')}</span></div>
+            <div class="mail-sum">${escapeHtml(e.summary || e.subject || '')}</div>
+          </div>
+          <div class="mail-right"><span class="mono" style="font-size:10px;color:var(--muted-2)">${escapeHtml(e.status || '')}</span><span class="chev">▾</span></div>
+        </div>
+        <div class="mail-body"><div class="mail-body-inner">
+          <div class="bfield"><span class="k">From</span><span class="v mono">${escapeHtml(e.from || '')}</span></div>
+          <div class="bfield"><span class="k">Subject</span><span class="v">${escapeHtml(e.subject || '')}</span></div>
+          <div class="bfield"><span class="k">Summary</span><span class="v">${escapeHtml(e.summary || '—')}</span></div>
+          ${action}${riskHtml}
+        </div></div>
+      </div>`;
+    }).join('');
+  }
+
+  const high = list.filter(e => priClass(e.priority) === 'high');
+  const low = list.filter(e => priClass(e.priority) === 'low');
+  const mid = list.filter(e => priClass(e.priority) === 'normal');
+  const card = (e) => {
+    const { mo, da } = monthDay(e.receivedAt || e.received_at);
+    return `<div class="tcard"><div class="tc-top"><span class="tc-sender">${escapeHtml(senderName(e.from))}</span><span class="tc-date">${mo} ${da}</span></div><div class="tc-sum">${escapeHtml(e.summary || e.subject || '')}</div></div>`;
+  };
+  $('slide-1').innerHTML = `<div class="tier-grid">
+    <div class="tier-col"><div class="tier-head high"><span class="dot"></span>High tier<span class="cnt">${high.length}</span></div><div class="tier-body">${high.map(card).join('') || '<div class="empty">None</div>'}</div></div>
+    <div class="tier-col"><div class="tier-head med"><span class="dot"></span>Normal<span class="cnt">${mid.length}</span></div><div class="tier-body">${mid.map(card).join('') || '<div class="empty">None</div>'}</div></div>
+    <div class="tier-col"><div class="tier-head low"><span class="dot"></span>Low tier<span class="cnt">${low.length}</span></div><div class="tier-body">${low.map(card).join('') || '<div class="empty">None</div>'}</div></div>
+  </div>`;
+}
+
+/* tabs */
+const tabs = document.querySelectorAll('.tab');
+const glider = $('glider');
+function moveGlider(el) {
+  glider.style.width = el.offsetWidth + 'px';
+  glider.style.transform = 'translateX(' + el.offsetLeft + 'px)';
+}
+function selectTab(el) {
+  tabs.forEach(t => t.classList.remove('active'));
+  el.classList.add('active');
+  moveGlider(el);
+  const idx = +el.dataset.slide;
+  document.querySelectorAll('.slide').forEach((s, i) => s.classList.toggle('show', i === idx));
+  $('viewTitle').textContent = ['Inbox', 'By tier'][idx];
+}
+tabs.forEach(t => t.addEventListener('click', () => selectTab(t)));
+window.addEventListener('load', () => moveGlider(document.querySelector('.tab.active')));
+window.addEventListener('resize', () => moveGlider(document.querySelector('.tab.active')));
+document.addEventListener('click', e => {
+  const a = document.querySelector('.acct');
+  if (a && !a.contains(e.target)) $('acctMenu').classList.remove('open');
+});
+
+boot();
+setInterval(() => { if (me) loadEmails().catch(() => {}); }, 60000);
 </script>
 </body>
 </html>

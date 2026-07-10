@@ -12,6 +12,7 @@
   --ink:#000000;--ink-2:#0B0B0B;--ink-3:#141414;--line:#242424;
   --paper:#F7F5F1;--muted:#8C8C8C;--muted-2:#5C5C5C;
   --amber:#FF6B2C;--amber-soft:#2B180D;--teal:#39B27D;--teal-soft:#0F2119;--radius:14px;
+  --red:#E5645C;--red-soft:#301412;
 }
 *{box-sizing:border-box;margin:0;padding:0}
 body{background:
@@ -22,21 +23,17 @@ body{background:
 .mono{font-family:'JetBrains Mono',monospace}
 a{color:inherit;text-decoration:none}
 .wrap{max-width:640px;margin:0 auto;padding:0 24px}
-
-/* top brand */
 .top{border-bottom:1px solid var(--line);background:rgba(0,0,0,.8);backdrop-filter:blur(12px)}
 .top-inner{max-width:960px;margin:0 auto;padding:0 24px;height:64px;display:flex;align-items:center;gap:11px}
-.brand{display:flex;align-items:center;gap:11px;font-family:'Satoshi';font-weight:700;font-size:19px;letter-spacing:1.5px}
+.brand{display:flex;align-items:center;gap:11px;font-weight:700;font-size:19px;letter-spacing:1.5px}
 .logo{width:32px;height:32px;flex-shrink:0;display:grid;place-items:center}
 .logo svg{width:100%;height:100%;display:block}
 .top-inner .exit{margin-left:auto;color:var(--muted-2);font-size:13.5px}
-
-/* ---------- stepper (Pic 1) ---------- */
 .stepper-band{border-bottom:1px solid var(--line);background:var(--ink-2)}
 .stepper{max-width:960px;margin:0 auto;padding:26px 24px;display:flex;align-items:center}
 .step{display:flex;align-items:center;gap:12px;flex-shrink:0}
 .step .num{width:36px;height:36px;border-radius:50%;display:grid;place-items:center;font-family:'JetBrains Mono';font-weight:600;font-size:14px;border:1.5px solid var(--line);background:var(--ink-3);color:var(--muted-2);transition:all .35s}
-.step .lbl{font-family:'Satoshi';font-weight:500;font-size:15px;color:var(--muted-2);transition:color .35s;white-space:nowrap}
+.step .lbl{font-weight:500;font-size:15px;color:var(--muted-2);transition:color .35s;white-space:nowrap}
 .step.active .num{background:var(--amber);border-color:var(--amber);color:#0A0500;box-shadow:0 0 0 5px rgba(255,107,44,.16)}
 .step.active .lbl{color:var(--paper)}
 .step.done .num{background:var(--teal);border-color:var(--teal);color:var(--ink)}
@@ -44,74 +41,61 @@ a{color:inherit;text-decoration:none}
 .connector{flex:1;height:1.5px;background:var(--line);margin:0 14px;min-width:20px;transition:background .35s}
 .connector.filled{background:var(--teal)}
 @media(max-width:760px){.step .lbl{display:none}.connector{margin:0 8px}}
-
-/* ---------- panels ---------- */
 .stage{padding:56px 0 80px}
 .panel{display:none;animation:fade .4s ease both}
 .panel.show{display:block}
 @keyframes fade{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
 .p-eyebrow{font-family:'JetBrains Mono';font-size:12px;letter-spacing:2px;text-transform:uppercase;color:var(--amber);margin-bottom:14px}
-h1{font-family:'Satoshi';font-weight:700;font-size:32px;letter-spacing:-.6px;line-height:1.1;margin-bottom:12px}
+h1{font-weight:700;font-size:32px;letter-spacing:-.6px;line-height:1.1;margin-bottom:12px}
 .sub{color:var(--muted);font-size:16px;margin-bottom:34px;max-width:480px}
-
 .card{background:var(--ink-2);border:1px solid var(--line);border-radius:var(--radius);padding:28px}
 label{display:block;font-size:13px;font-weight:600;color:var(--muted);margin-bottom:8px;letter-spacing:.2px}
-input{width:100%;background:var(--ink);border:1px solid var(--line);color:var(--paper);border-radius:10px;padding:13px 15px;font-family:'Satoshi';font-size:15px;margin-bottom:18px;transition:border-color .2s}
-input:focus{outline:none;border-color:var(--amber)}
-input.mono{font-family:'JetBrains Mono';letter-spacing:3px;text-align:center;font-size:22px}
-
-.btn{display:inline-flex;align-items:center;justify-content:center;gap:10px;font-family:'Satoshi';font-weight:600;font-size:15px;padding:13px 22px;border-radius:999px;border:1px solid transparent;cursor:pointer;transition:all .2s;width:100%}
+input,select,textarea{width:100%;background:var(--ink);border:1px solid var(--line);color:var(--paper);border-radius:10px;padding:13px 15px;font-family:'Satoshi';font-size:15px;margin-bottom:18px;transition:border-color .2s}
+input:focus,select:focus,textarea:focus{outline:none;border-color:var(--amber)}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:10px;font-weight:600;font-size:15px;padding:13px 22px;border-radius:999px;border:1px solid transparent;cursor:pointer;transition:all .2s;width:100%}
+.btn:disabled{opacity:.5;cursor:not-allowed}
 .btn-primary{background:var(--amber);color:#0A0500}
-.btn-primary:hover{background:#ff7f47}
-.btn-google{background:#fff;color:#1a1a1a;font-weight:600}
-.btn-google:hover{background:#f1f1f1}
+.btn-primary:hover:not(:disabled){background:#ff7f47}
 .btn-ghost{background:transparent;border-color:var(--line);color:var(--paper)}
 .btn-ghost:hover{border-color:var(--muted)}
-.g-ic{width:19px;height:19px}
-
-.divider{display:flex;align-items:center;gap:14px;color:var(--muted-2);font-size:12.5px;margin:22px 0}
-.divider::before,.divider::after{content:"";flex:1;height:1px;background:var(--line)}
-
+.auth-tabs{display:flex;gap:8px;margin-bottom:18px}
+.auth-tabs .btn{width:auto;flex:1;padding:11px}
+.auth-tabs .btn.active{background:var(--amber);color:#0A0500;border-color:var(--amber)}
 .nav-row{display:flex;gap:12px;margin-top:26px}
 .nav-row .btn{width:auto;flex:1}
 .skip{background:none;border:none;color:var(--muted);font-size:14px;cursor:pointer;text-decoration:underline;text-underline-offset:3px}
-
-/* connect chat cards */
 .channels{display:grid;grid-template-columns:1fr 1fr;gap:14px}
 @media(max-width:520px){.channels{grid-template-columns:1fr}}
 .chan{background:var(--ink);border:1px solid var(--line);border-radius:12px;padding:20px;text-align:center;cursor:pointer;transition:all .2s}
 .chan:hover{border-color:var(--muted-2);transform:translateY(-2px)}
 .chan.primary{border-color:var(--amber-soft)}
 .chan-ic{width:48px;height:48px;border-radius:12px;display:grid;place-items:center;margin:0 auto 12px;font-size:24px;background:var(--ink-3);border:1px solid var(--line)}
-.chan h3{font-family:'Satoshi';font-size:16px;font-weight:600;margin-bottom:4px}
+.chan h3{font-size:16px;font-weight:600;margin-bottom:4px}
 .chan p{font-size:12.5px;color:var(--muted)}
 .chan .badge{display:inline-block;font-family:'JetBrains Mono';font-size:10px;letter-spacing:.8px;text-transform:uppercase;color:var(--amber);border:1px solid var(--amber-soft);padding:2px 8px;border-radius:5px;margin-top:10px}
 .chan .badge.ok{color:var(--teal);border-color:var(--teal-soft)}
-
-/* priority rule builder */
 .rule-row{display:flex;gap:10px;margin-bottom:14px;flex-wrap:wrap}
-select{background:var(--ink);border:1px solid var(--line);color:var(--paper);border-radius:10px;padding:12px 14px;font-family:'Satoshi';font-size:14px;cursor:pointer}
-select:focus{outline:none;border-color:var(--amber)}
 .rule-row input{margin-bottom:0;flex:1;min-width:120px}
+.rule-row select{margin-bottom:0;width:auto}
 .rule-add{background:var(--ink-3);border:1px solid var(--line);color:var(--paper);border-radius:10px;padding:0 18px;cursor:pointer;font-weight:600;font-size:20px}
-.rule-add:hover{border-color:var(--amber)}
 .rules-list{margin-top:8px;display:flex;flex-direction:column;gap:8px}
 .rule-chip{display:flex;align-items:center;gap:10px;background:var(--ink);border:1px solid var(--line);border-radius:9px;padding:10px 13px;font-size:13.5px}
 .pill{font-family:'JetBrains Mono';font-size:10px;letter-spacing:.6px;text-transform:uppercase;padding:2px 8px;border-radius:5px;font-weight:500}
 .pill.high{background:var(--amber-soft);color:var(--amber)}
 .pill.low{background:var(--ink-3);color:var(--muted)}
-.rule-chip .x{margin-left:auto;color:var(--muted-2);cursor:pointer;font-size:16px}
-.rule-chip .x:hover{color:var(--paper)}
-
-/* success step */
+.rule-chip .x{margin-left:auto;color:var(--muted-2);cursor:pointer;font-size:16px;background:none;border:none}
 .done-wrap{text-align:center;padding:20px 0}
 .done-ring{width:82px;height:82px;border-radius:50%;background:var(--teal-soft);border:1.5px solid var(--teal);display:grid;place-items:center;margin:0 auto 26px;font-size:38px;color:var(--teal)}
 .hint{font-size:13px;color:var(--muted-2);margin-top:16px}
-.mini-note{font-size:12.5px;color:var(--muted-2);margin-top:14px;display:flex;align-items:center;gap:7px;justify-content:center}
+.mini-note{font-size:12.5px;color:var(--muted-2);margin-top:14px}
+.msg{padding:10px 14px;border-radius:9px;margin:0 0 14px;font-size:13px;display:none}
+.msg.err{background:var(--red-soft);color:#FF9AA2;display:block}
+.msg.good{background:var(--teal-soft);color:var(--teal);display:block}
+details{margin:8px 0 14px;color:var(--muted-2);font-size:13px}
+details summary{cursor:pointer;margin-bottom:8px}
 </style>
 </head>
 <body>
-
 <div class="top">
   <div class="top-inner">
     <div class="brand"><span class="logo"><svg viewBox="0 0 120 100" xmlns="http://www.w3.org/2000/svg"><defs><linearGradient id="mailerGrad" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#FFB25C"/><stop offset="1" stop-color="#E85A1B"/></linearGradient></defs><polygon points="8,8 34,8 96,92 70,92" fill="url(#mailerGrad)"/><polygon points="92,8 66,8 4,92 30,92" fill="url(#mailerGrad)"/><rect x="56" y="36" width="48" height="42" rx="9" fill="#C4501C"/><polygon points="56,40 80,64 104,40 104,45 80,70 56,45" fill="#F6ECDD"/><rect x="71" y="51" width="4" height="17" fill="#F6ECDD"/><rect x="78" y="51" width="4" height="17" fill="#F6ECDD"/><rect x="85" y="51" width="4" height="17" fill="#F6ECDD"/></svg></span>MAILER</div>
@@ -123,153 +107,340 @@ select:focus{outline:none;border-color:var(--amber)}
   <div class="stepper" id="stepper">
     <div class="step active" data-step="1"><span class="num">1</span><span class="lbl">Sign in</span></div>
     <div class="connector"></div>
-    <div class="step" data-step="2"><span class="num">2</span><span class="lbl">Connect chat</span></div>
+    <div class="step" data-step="2"><span class="num">2</span><span class="lbl">Inbox</span></div>
     <div class="connector"></div>
-    <div class="step" data-step="3"><span class="num">3</span><span class="lbl">Priority rules</span></div>
+    <div class="step" data-step="3"><span class="num">3</span><span class="lbl">Chat</span></div>
     <div class="connector"></div>
-    <div class="step" data-step="4"><span class="num">4</span><span class="lbl">Dashboard</span></div>
+    <div class="step" data-step="4"><span class="num">4</span><span class="lbl">Rules</span></div>
+    <div class="connector"></div>
+    <div class="step" data-step="5"><span class="num">5</span><span class="lbl">Done</span></div>
   </div>
 </div>
 
 <div class="stage"><div class="wrap">
 
-  <!-- STEP 1 — sign in -->
+  <!-- STEP 1 — auth -->
   <div class="panel show" id="panel-1">
-    <div class="p-eyebrow">Step 1 of 4</div>
+    <div class="p-eyebrow">Step 1 of 5</div>
     <h1>Sign in to MAILER</h1>
-    <p class="sub">No passwords, ever. Continue with Google, or get a one-time code sent to your email.</p>
+    <p class="sub">Create an account or log in with email and password (8+ characters).</p>
     <div class="card">
-      <button class="btn btn-google" onclick="go(2)">
-        <svg class="g-ic" viewBox="0 0 24 24"><path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92a5.06 5.06 0 0 1-2.2 3.32v2.76h3.56c2.08-1.92 3.28-4.74 3.28-8.09Z"/><path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.56-2.76c-.98.66-2.24 1.06-3.72 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84A11 11 0 0 0 12 23Z"/><path fill="#FBBC05" d="M5.84 14.11a6.6 6.6 0 0 1 0-4.22V7.05H2.18a11 11 0 0 0 0 9.9l3.66-2.84Z"/><path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1A11 11 0 0 0 2.18 7.05l3.66 2.84C6.71 7.31 9.14 5.38 12 5.38Z"/></svg>
-        Continue with Google
-      </button>
-      <div class="divider">or use a one-time email code</div>
-      <label for="email">Work email</label>
-      <input id="email" type="email" placeholder="you@yourbusiness.com" autocomplete="email">
-      <button class="btn btn-primary" onclick="sendCode()">Send me a code →</button>
-
-      <!-- code entry (revealed after send) -->
-      <div id="codeBlock" style="display:none;margin-top:24px">
-        <div class="divider">enter the 6-digit code</div>
-        <input id="code" class="mono" maxlength="6" placeholder="000000" inputmode="numeric">
-        <button class="btn btn-primary" onclick="go(2)">Verify & continue →</button>
-        <div class="mini-note">📧 Sent to <span id="sentTo" class="mono"></span> · code expires in 10 min</div>
+      <div class="auth-tabs">
+        <button type="button" class="btn btn-ghost active" id="tab-signup" onclick="authTab('signup')">Sign up</button>
+        <button type="button" class="btn btn-ghost" id="tab-login" onclick="authTab('login')">Log in</button>
       </div>
+      <label for="auth-email">Email</label>
+      <input id="auth-email" type="email" placeholder="you@yourbusiness.com" autocomplete="email">
+      <label for="auth-pass">Password</label>
+      <input id="auth-pass" type="password" placeholder="8+ characters" autocomplete="current-password">
+      <div class="msg" id="auth-msg"></div>
+      <button class="btn btn-primary" id="auth-btn" onclick="doAuth()">Create account →</button>
+      <div class="mini-note">Already use the classic panel? <a href="app.html" style="color:var(--amber)">Open app.html</a></div>
     </div>
   </div>
 
-  <!-- STEP 2 — connect chat -->
+  <!-- STEP 2 — inbox -->
   <div class="panel" id="panel-2">
-    <div class="p-eyebrow">Step 2 of 4</div>
-    <h1>Connect your chat</h1>
-    <p class="sub">This is where MAILER delivers your inbox. Pick one now — you can add the other later.</p>
+    <div class="p-eyebrow">Step 2 of 5</div>
+    <h1>Connect your inbox</h1>
+    <p class="sub">Gmail: enable 2-Step Verification, create an App Password, paste it here with no spaces.</p>
     <div class="card">
-      <div class="channels">
-        <div class="chan primary" onclick="linkChat(this,'WhatsApp')">
-          <div class="chan-ic">🟢</div>
-          <h3>WhatsApp</h3>
-          <p>Tap to open with a pre-filled link</p>
-          <span class="badge">Recommended</span>
-        </div>
-        <div class="chan" onclick="linkChat(this,'Telegram')">
-          <div class="chan-ic">✈️</div>
-          <h3>Telegram</h3>
-          <p>Opens the MAILER bot, one tap</p>
-          <span class="badge">Instant</span>
-        </div>
-      </div>
-      <div class="mini-note" style="margin-top:20px">🔒 MAILER only ever messages the chat you connect here.</div>
+      <label for="in-user">Inbox address</label>
+      <input id="in-user" type="email" placeholder="you@gmail.com">
+      <label for="in-pass">App password</label>
+      <input id="in-pass" type="password" placeholder="App password (no spaces)">
+      <details>
+        <summary>Advanced (non-Gmail hosts)</summary>
+        <input id="in-imaphost" placeholder="IMAP host (default imap.gmail.com)">
+        <input id="in-imapport" placeholder="IMAP port (993)">
+        <input id="in-smtphost" placeholder="SMTP host (default smtp.gmail.com)">
+        <input id="in-smtpport" placeholder="SMTP port (465)">
+      </details>
+      <div class="msg" id="inbox-msg"></div>
+      <button class="btn btn-primary" id="inbox-btn" onclick="connectInbox()">Verify & connect inbox →</button>
+      <div id="inbox-ok" class="mini-note" style="display:none;color:var(--teal)">Inbox connected.</div>
     </div>
     <div class="nav-row">
       <button class="btn btn-ghost" onclick="go(1)">← Back</button>
-      <button class="btn btn-primary" onclick="go(3)" id="chatNext">Continue →</button>
+      <button class="btn btn-primary" id="inbox-next" onclick="go(3)" disabled>Continue →</button>
     </div>
   </div>
 
-  <!-- STEP 3 — priority rules (skippable) -->
+  <!-- STEP 3 — chat -->
   <div class="panel" id="panel-3">
-    <div class="p-eyebrow">Step 3 of 4 · Optional</div>
+    <div class="p-eyebrow">Step 3 of 5</div>
+    <h1>Connect your chat</h1>
+    <p class="sub">Where MAILER delivers your inbox. Link at least one channel.</p>
+    <div class="card">
+      <div class="channels">
+        <div class="chan primary" id="chan-wa" onclick="linkWhatsApp()">
+          <div class="chan-ic">🟢</div>
+          <h3>WhatsApp</h3>
+          <p>Opens with a pre-filled link message</p>
+          <span class="badge" id="wa-badge">Recommended</span>
+        </div>
+        <div class="chan" id="chan-tg" onclick="linkTelegram()">
+          <div class="chan-ic">✈️</div>
+          <h3>Telegram</h3>
+          <p>Opens the MAILER bot — press START</p>
+          <span class="badge" id="tg-badge">Instant</span>
+        </div>
+      </div>
+      <div class="msg" id="chat-msg"></div>
+      <div class="mini-note" id="chat-hint">After linking, come back here and continue. Links expire in ~30 minutes.</div>
+    </div>
+    <div class="nav-row">
+      <button class="btn btn-ghost" onclick="go(2)">← Back</button>
+      <button class="btn btn-primary" onclick="go(4)">Continue →</button>
+    </div>
+    <div style="text-align:center;margin-top:18px"><button class="skip" onclick="go(4)">Skip for now</button></div>
+  </div>
+
+  <!-- STEP 4 — rules -->
+  <div class="panel" id="panel-4">
+    <div class="p-eyebrow">Step 4 of 5 · Optional</div>
     <h1>Set your priorities</h1>
-    <p class="sub">Tell MAILER what matters. High-tier senders and keywords rise to the top of every view. You can skip this and set it later.</p>
+    <p class="sub">High rules bubble important mail up. Low rules de-emphasize noise. You can change these anytime.</p>
     <div class="card">
       <div class="rule-row">
         <select id="rType"><option value="keyword">Keyword</option><option value="sender">Sender</option><option value="domain">Domain</option></select>
         <input id="rValue" placeholder="e.g. invoice">
         <select id="rLevel"><option value="high">High</option><option value="low">Low</option></select>
-        <button class="rule-add" onclick="addRule()">+</button>
+        <button class="rule-add" type="button" onclick="addRule()">+</button>
       </div>
-      <div class="rules-list" id="rulesList">
-        <div class="rule-chip"><span class="pill high">High</span>keyword contains <b>“invoice”</b><span class="x" onclick="this.parentElement.remove()">×</span></div>
-        <div class="rule-chip"><span class="pill high">High</span>keyword contains <b>“urgent”</b><span class="x" onclick="this.parentElement.remove()">×</span></div>
-        <div class="rule-chip"><span class="pill low">Low</span>domain contains <b>“newsletter”</b><span class="x" onclick="this.parentElement.remove()">×</span></div>
-      </div>
+      <div class="rules-list" id="rulesList"></div>
+      <div class="msg" id="rules-msg"></div>
     </div>
     <div class="nav-row">
-      <button class="btn btn-ghost" onclick="go(2)">← Back</button>
-      <button class="btn btn-primary" onclick="go(4)">Save & continue →</button>
+      <button class="btn btn-ghost" onclick="go(3)">← Back</button>
+      <button class="btn btn-primary" onclick="go(5)">Save & continue →</button>
     </div>
-    <div style="text-align:center;margin-top:18px"><button class="skip" onclick="go(4)">Skip for now</button></div>
+    <div style="text-align:center;margin-top:18px"><button class="skip" onclick="go(5)">Skip for now</button></div>
   </div>
 
-  <!-- STEP 4 — into dashboard -->
-  <div class="panel" id="panel-4">
+  <!-- STEP 5 — done -->
+  <div class="panel" id="panel-5">
     <div class="done-wrap">
       <div class="done-ring">✓</div>
       <h1>MAILER is watching your inbox.</h1>
-      <p class="sub" style="margin:12px auto 0">You're all set. MAILER will start delivering prioritized, summarized email to your chat — and your dashboard is ready.</p>
+      <p class="sub" style="margin:12px auto 0">You're set. Prioritized, summarized email will flow to your chat — and your dashboard is ready.</p>
       <div style="max-width:320px;margin:34px auto 0">
         <a class="btn btn-primary" href="dashboard.html">Go to my dashboard →</a>
       </div>
-      <div class="hint">Tip: send yourself a test email and watch it appear.</div>
+      <div class="hint">Tip: send yourself a test email and watch it appear in chat and on the dashboard.</div>
     </div>
   </div>
 
 </div></div>
 
 <script>
+const $ = (id) => document.getElementById(id);
+let authMode = 'signup';
 let current = 1;
-function go(step){
+
+async function api(path, opts = {}) {
+  const res = await fetch('/api' + path, {
+    headers: { 'content-type': 'application/json' },
+    credentials: 'same-origin',
+    ...opts,
+    body: opts.body ? JSON.stringify(opts.body) : undefined,
+  });
+  const data = await res.json().catch(() => ({}));
+  if (!res.ok) throw new Error(data.error || ('Request failed: ' + res.status));
+  return data;
+}
+
+function showMsg(id, text, good = false) {
+  const el = $(id);
+  if (!el) return;
+  el.textContent = text || '';
+  el.className = 'msg' + (text ? (good ? ' good' : ' err') : '');
+}
+
+function go(step) {
   current = step;
-  document.querySelectorAll('.panel').forEach(p=>p.classList.remove('show'));
-  document.getElementById('panel-'+step).classList.add('show');
-  const steps = document.querySelectorAll('.step');
-  const conns = document.querySelectorAll('.connector');
-  steps.forEach(s=>{
+  document.querySelectorAll('.panel').forEach(p => p.classList.remove('show'));
+  $('panel-' + step).classList.add('show');
+  document.querySelectorAll('.step').forEach(s => {
     const n = +s.dataset.step;
-    s.classList.toggle('active', n===step);
-    s.classList.toggle('done', n<step);
+    s.classList.toggle('active', n === step);
+    s.classList.toggle('done', n < step);
   });
-  conns.forEach((c,i)=>c.classList.toggle('filled', i < step-1));
-  window.scrollTo({top:0,behavior:'smooth'});
+  document.querySelectorAll('.connector').forEach((c, i) => c.classList.toggle('filled', i < step - 1));
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+  if (step === 3) refreshChatStatus();
+  if (step === 4) loadRules();
 }
-function sendCode(){
-  const email = document.getElementById('email').value.trim();
-  if(!email || !email.includes('@')){ alert('Enter a valid email'); return; }
-  document.getElementById('sentTo').textContent = email;
-  document.getElementById('codeBlock').style.display='block';
-  document.getElementById('code').focus();
+
+function authTab(mode) {
+  authMode = mode;
+  $('tab-signup').classList.toggle('active', mode === 'signup');
+  $('tab-login').classList.toggle('active', mode === 'login');
+  $('auth-btn').textContent = mode === 'signup' ? 'Create account →' : 'Log in →';
 }
-function linkChat(el, name){
-  el.parentElement.querySelectorAll('.chan').forEach(c=>{
-    const b=c.querySelector('.badge'); b.classList.remove('ok');
-    b.textContent = c===el ? 'Recommended' : b.textContent;
-  });
-  const badge = el.querySelector('.badge');
-  badge.classList.add('ok'); badge.textContent='Connected ✓';
-  document.getElementById('chatNext').textContent = name+' connected · Continue →';
+
+async function doAuth() {
+  showMsg('auth-msg', '');
+  $('auth-btn').disabled = true;
+  try {
+    await api('/' + authMode, {
+      method: 'POST',
+      body: { email: $('auth-email').value.trim(), password: $('auth-pass').value },
+    });
+    go(2);
+    const me = await api('/me');
+    if (me.inboxConnected) {
+      $('inbox-ok').style.display = 'block';
+      $('inbox-next').disabled = false;
+      if (me.inboxUser) $('in-user').value = me.inboxUser;
+    }
+  } catch (e) {
+    showMsg('auth-msg', e.message);
+  }
+  $('auth-btn').disabled = false;
 }
-function addRule(){
-  const t=document.getElementById('rType').value;
-  const v=document.getElementById('rValue').value.trim();
-  const l=document.getElementById('rLevel').value;
-  if(!v) return;
-  const chip=document.createElement('div');
-  chip.className='rule-chip';
-  chip.innerHTML=`<span class="pill ${l}">${l==='high'?'High':'Low'}</span>${t} contains <b>“${v}”</b><span class="x">×</span>`;
-  chip.querySelector('.x').onclick=()=>chip.remove();
-  document.getElementById('rulesList').appendChild(chip);
-  document.getElementById('rValue').value='';
+
+async function connectInbox() {
+  showMsg('inbox-msg', '');
+  if (/\s/.test($('in-pass').value)) {
+    showMsg('inbox-msg', 'Remove ALL spaces from the app password and try again.');
+    return;
+  }
+  $('inbox-btn').disabled = true;
+  $('inbox-btn').textContent = 'Verifying with your mail server…';
+  try {
+    await api('/inbox', {
+      method: 'POST',
+      body: {
+        mailUser: $('in-user').value.trim(),
+        mailPass: $('in-pass').value,
+        imapHost: $('in-imaphost').value || undefined,
+        imapPort: $('in-imapport').value || undefined,
+        smtpHost: $('in-smtphost').value || undefined,
+        smtpPort: $('in-smtpport').value || undefined,
+      },
+    });
+    showMsg('inbox-msg', 'Inbox connected — MAILER is watching it now.', true);
+    $('inbox-ok').style.display = 'block';
+    $('inbox-next').disabled = false;
+  } catch (e) {
+    showMsg('inbox-msg', e.message);
+  }
+  $('inbox-btn').disabled = false;
+  $('inbox-btn').textContent = 'Verify & connect inbox →';
 }
+
+async function refreshChatStatus() {
+  try {
+    const me = await api('/me');
+    if (me.telegramLinked) {
+      $('tg-badge').classList.add('ok');
+      $('tg-badge').textContent = 'Connected ✓';
+    }
+    if (me.whatsappNumber) {
+      $('wa-badge').classList.add('ok');
+      $('wa-badge').textContent = 'Connected ✓';
+    }
+    if (!me.whatsappEnabled) {
+      $('wa-badge').textContent = 'Not enabled';
+    }
+  } catch {}
+}
+
+async function linkTelegram() {
+  showMsg('chat-msg', '');
+  try {
+    const { link } = await api('/link/telegram', { method: 'POST' });
+    showMsg('chat-msg', 'Opening Telegram… press START in the bot chat.', true);
+    $('chat-hint').innerHTML = 'If nothing opened: <a href="' + link + '" target="_blank" style="color:var(--amber)">' + link + '</a>';
+    window.open(link, '_blank');
+    setTimeout(refreshChatStatus, 8000);
+  } catch (e) {
+    showMsg('chat-msg', e.message);
+  }
+}
+
+async function linkWhatsApp() {
+  showMsg('chat-msg', '');
+  try {
+    const { link, number } = await api('/link/whatsapp/start', { method: 'POST' });
+    showMsg('chat-msg', 'Opening WhatsApp… hit send on the pre-filled message.', true);
+    $('chat-hint').innerHTML = 'Sandbox users: join code to ' + number + ' first. Link: <a href="' + link + '" target="_blank" style="color:var(--amber)">open WhatsApp</a>';
+    window.open(link, '_blank');
+    setTimeout(refreshChatStatus, 8000);
+  } catch (e) {
+    showMsg('chat-msg', e.message);
+  }
+}
+
+function escapeHtml(s) {
+  const d = document.createElement('div');
+  d.textContent = s || '';
+  return d.innerHTML;
+}
+
+async function loadRules() {
+  try {
+    const rules = await api('/rules');
+    const list = $('rulesList');
+    list.innerHTML = '';
+    if (!rules.length) {
+      list.innerHTML = '<div class="mini-note">No rules yet — try keyword “invoice” → High.</div>';
+      return;
+    }
+    for (const r of rules) {
+      const chip = document.createElement('div');
+      chip.className = 'rule-chip';
+      chip.innerHTML = '<span class="pill ' + r.level + '">' + r.level + '</span>' +
+        r.type + ' contains <b>“' + escapeHtml(r.value) + '”</b>';
+      const x = document.createElement('button');
+      x.className = 'x';
+      x.type = 'button';
+      x.textContent = '×';
+      x.onclick = async () => {
+        await api('/rules/' + r.id, { method: 'DELETE' });
+        loadRules();
+      };
+      chip.appendChild(x);
+      list.appendChild(chip);
+    }
+  } catch (e) {
+    showMsg('rules-msg', e.message);
+  }
+}
+
+async function addRule() {
+  showMsg('rules-msg', '');
+  try {
+    await api('/rules', {
+      method: 'POST',
+      body: {
+        type: $('rType').value,
+        value: $('rValue').value.trim(),
+        level: $('rLevel').value,
+      },
+    });
+    $('rValue').value = '';
+    loadRules();
+  } catch (e) {
+    showMsg('rules-msg', e.message);
+  }
+}
+
+/* If already signed in, skip auth */
+(async function boot() {
+  try {
+    const me = await api('/me');
+    go(me.inboxConnected ? 3 : 2);
+    if (me.inboxConnected) {
+      $('inbox-ok').style.display = 'block';
+      $('inbox-next').disabled = false;
+      if (me.inboxUser) $('in-user').value = me.inboxUser;
+    }
+  } catch {
+    /* stay on step 1 */
+  }
+})();
 </script>
 </body>
 </html>
