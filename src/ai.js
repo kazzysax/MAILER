@@ -41,11 +41,12 @@ function parseJSONSafe(t) {
   }
 }
 
-export async function analyzeEmail(email) {
+export async function analyzeEmail(email, categories = []) {
   const sys =
     "You are MAILER, an inbox assistant for busy business owners. Concise, decision-ready. Respond ONLY with valid JSON, no fences, no preamble.";
+  const catList = categories.length ? categories.join(", ") : "Other";
   const user = `Analyze this email. Return JSON exactly:
-{"summary":"one or two short sentences: who wants what, any money or deadline at stake","action":"the single concrete action requested of the reader with any deadline, or null"}
+{"summary":"one or two short sentences: who wants what, any money or deadline at stake","action":"the single concrete action requested of the reader with any deadline, or null","category":"pick exactly one from this list: ${catList}"}
 
 FROM: ${email.from}
 SUBJECT: ${email.subject}
@@ -57,6 +58,7 @@ ${(email.body || "").slice(0, 6000)}`;
   return {
     summary: p?.summary || raw.slice(0, 240),
     action: p?.action || null,
+    category: p?.category || null,
   };
 }
 

@@ -70,18 +70,30 @@ function emailButtons(e, hasTeam = false) {
   return b;
 }
 
+/* ---------- clamp the AI's category guess to the user's actual list ---------- */
+function pickCategory(guess, categoryNames) {
+  if (!categoryNames.length) return null;
+  const match = categoryNames.find((c) => c.toLowerCase() === (guess || "").toLowerCase());
+  if (match) return match;
+  return categoryNames.includes("Other") ? "Other" : categoryNames[0];
+}
+
 /* ---------- process a newly fetched email for a user ---------- */
 export async function processIncoming(user, email) {
   const rules = db.rulesFor(user.id);
   const pr = computePriority(email, rules);
   email.priority = pr.level;
+  const categories = db.categoriesFor(user.id);
+  const categoryNames = categories.map((c) => c.name);
   try {
-    const a = await analyzeEmail(email);
+    const a = await analyzeEmail(email, categoryNames);
     email.summary = a.summary;
     email.action = a.action;
+    email.category = pickCategory(a.category, categoryNames);
   } catch (err) {
     console.error("Analyze failed:", err.message);
     email.summary = (email.body || "").slice(0, 200);
+    email.category = categoryNames.includes("Other") ? "Other" : categoryNames[0] || null;
   }
   db.insertEmail(email);
 

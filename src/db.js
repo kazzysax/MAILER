@@ -69,6 +69,12 @@ CREATE TABLE IF NOT EXISTS used_payments (
   payer TEXT,
   used_at INTEGER NOT NULL
 );
+CREATE TABLE IF NOT EXISTS categories (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  user_id INTEGER NOT NULL,
+  name TEXT NOT NULL,
+  created_at INTEGER NOT NULL
+);
 CREATE INDEX IF NOT EXISTS idx_emails_user ON emails(user_id, status);
 `);
 
@@ -81,6 +87,7 @@ for (const sql of [
   "ALTER TABLE emails ADD COLUMN scam_risk REAL",
   "ALTER TABLE emails ADD COLUMN scam_reasons TEXT",
   "ALTER TABLE users ADD COLUMN google_id TEXT",
+  "ALTER TABLE emails ADD COLUMN category TEXT",
 ]) {
   try { db.exec(sql); } catch {}
 }
@@ -160,14 +167,25 @@ export const addTemplate = (userId, name, content) =>
   db.prepare("INSERT INTO templates (user_id, name, content) VALUES (?,?,?)").run(userId, name, content);
 export const delTemplate = (userId, id) => db.prepare("DELETE FROM templates WHERE id = ? AND user_id = ?").run(id, userId);
 
+/* ---------- categories ---------- */
+export const DEFAULT_CATEGORIES = ["Payment", "Complaint", "Request", "Update", "Other"];
+export const seedDefaultCategories = (userId) => {
+  const stmt = db.prepare("INSERT INTO categories (user_id, name, created_at) VALUES (?,?,?)");
+  for (const name of DEFAULT_CATEGORIES) stmt.run(userId, name, Date.now());
+};
+export const categoriesFor = (userId) => db.prepare("SELECT * FROM categories WHERE user_id = ? ORDER BY id").all(userId);
+export const addCategory = (userId, name) =>
+  db.prepare("INSERT INTO categories (user_id, name, created_at) VALUES (?,?,?)").run(userId, name, Date.now());
+export const delCategory = (userId, id) => db.prepare("DELETE FROM categories WHERE id = ? AND user_id = ?").run(id, userId);
+
 /* ---------- emails ---------- */
 export const insertEmail = (e) =>
-  db.prepare(`INSERT INTO emails (id, user_id, uid, from_text, from_addr, subject, body, attachments, message_id, received_at, priority, summary, action, status, snoozed_until, sent_reply)
-              VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`)
+  db.prepare(`INSERT INTO emails (id, user_id, uid, from_text, from_addr, subject, body, attachments, message_id, received_at, priority, summary, action, status, snoozed_until, sent_reply, category)
+              VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`)
     .run(e.id, e.userId, e.uid ?? null, e.from ?? null, e.fromAddr ?? null, e.subject ?? null, e.body ?? null,
          JSON.stringify(e.attachments || []), e.messageId ?? null, e.receivedAt ?? Date.now(),
          e.priority ?? null, e.summary ?? null, e.action ?? null, e.status || "new",
-         e.snoozedUntil ?? null, e.sentReply ?? null);
+         e.snoozedUntil ?? null, e.sentReply ?? null, e.category ?? null);
 
 export const emailById = (id) => hydrate(db.prepare("SELECT * FROM emails WHERE id = ?").get(id));
 export const openEmailsFor = (userId) =>
@@ -225,7 +243,7 @@ function hydrate(row) {
     messageId: row.message_id, receivedAt: row.received_at,
     priority: row.priority, summary: row.summary, action: row.action,
     status: row.status, snoozedUntil: row.snoozed_until, sentReply: row.sent_reply,
-    pendingPush: row.pending_push, claimedBy: row.claimed_by,
+    pendingPush: row.pending_push, claimedBy: row.claimed_by, category: row.category,
   };
 }
 

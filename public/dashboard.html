@@ -190,6 +190,16 @@ textarea:focus,.mini-row input:focus,.mini-row select:focus,.tname:focus{outline
       </div></div>
     </div>
     <div class="bar">
+      <div class="bar-head" onclick="this.parentElement.classList.toggle('open')"><span class="bic">🗂️</span><h4>Categories</h4><span class="cnt" id="catCount">0</span><span class="chev-b">▾</span></div>
+      <div class="bar-body"><div class="bar-body-inner">
+        <div class="mini-row">
+          <input id="catValue" placeholder="e.g. Legal" style="flex:1">
+          <button class="mini-add" type="button" onclick="addCategoryUI()">+</button>
+        </div>
+        <div id="catList"></div>
+      </div></div>
+    </div>
+    <div class="bar">
       <div class="bar-head" onclick="this.parentElement.classList.toggle('open')"><span class="bic">📄</span><h4>Templates</h4><span class="cnt" id="tmCount">0</span><span class="chev-b">▾</span></div>
       <div class="bar-body"><div class="bar-body-inner">
         <input id="tName" class="tname mono" placeholder="Template name">
@@ -212,13 +222,15 @@ textarea:focus,.mini-row input:focus,.mini-row select:focus,.tname:focus{outline
 
     <div class="tabs" id="tabs">
       <button class="tab active" data-slide="0" type="button"><span class="ic">📨</span>Emails <span class="count" id="cntEmails">0</span></button>
-      <button class="tab" data-slide="1" type="button"><span class="ic">📊</span>Tier <span class="count" id="cntTiers">3</span></button>
+      <button class="tab" data-slide="1" type="button"><span class="ic">🗂️</span>Category <span class="count" id="cntCategories">0</span></button>
+      <button class="tab" data-slide="2" type="button"><span class="ic">📊</span>Tier <span class="count" id="cntTiers">3</span></button>
       <div class="tab-glider" id="glider"></div>
     </div>
 
     <div class="slides">
       <div class="slide show" id="slide-0"></div>
       <div class="slide" id="slide-1"></div>
+      <div class="slide" id="slide-2"></div>
     </div>
   </div>
 </div>
@@ -226,6 +238,7 @@ textarea:focus,.mini-row input:focus,.mini-row select:focus,.tname:focus{outline
 <script>
 const $ = (id) => document.getElementById(id);
 let emails = [];
+let categories = [];
 let me = null;
 
 async function api(path, opts = {}) {
@@ -294,7 +307,7 @@ async function boot() {
   $('conn-tg').className = 'conn ' + (me.telegramLinked ? 'on' : 'off');
   $('conn-wa').className = 'conn ' + (me.whatsappNumber ? 'on' : 'off');
 
-  await Promise.all([loadRules(), loadTemplates(), loadEmails()]);
+  await Promise.all([loadRules(), loadTemplates(), loadCategories(), loadEmails()]);
 }
 
 async function loadRules() {
@@ -356,6 +369,38 @@ async function addTemplate() {
   } catch (e) { alert(e.message); }
 }
 
+async function loadCategories() {
+  categories = await api('/categories');
+  const list = $('catList');
+  list.innerHTML = '';
+  $('catCount').textContent = categories.length;
+  $('cntCategories').textContent = categories.length;
+  for (const c of categories) {
+    const chip = document.createElement('div');
+    chip.className = 'chip';
+    chip.innerHTML = escapeHtml(c.name);
+    const x = document.createElement('button');
+    x.className = 'x'; x.type = 'button'; x.textContent = '×';
+    x.onclick = async () => {
+      try { await api('/categories/' + c.id, { method: 'DELETE' }); loadCategories(); renderEmails(); }
+      catch (e) { alert(e.message); }
+    };
+    chip.appendChild(x);
+    list.appendChild(chip);
+  }
+  renderEmails();
+}
+
+async function addCategoryUI() {
+  const name = $('catValue').value.trim();
+  if (!name) return;
+  try {
+    await api('/categories', { method: 'POST', body: { name } });
+    $('catValue').value = '';
+    loadCategories();
+  } catch (e) { alert(e.message); }
+}
+
 async function loadEmails() {
   emails = await api('/emails');
   renderEmails();
@@ -414,11 +459,26 @@ function renderEmails() {
     const { mo, da } = monthDay(e.receivedAt || e.received_at);
     return `<div class="tcard"><div class="tc-top"><span class="tc-sender">${escapeHtml(senderName(e.from))}</span><span class="tc-date">${mo} ${da}</span></div><div class="tc-sum">${escapeHtml(e.summary || e.subject || '')}</div></div>`;
   };
-  $('slide-1').innerHTML = `<div class="tier-grid">
+  $('slide-2').innerHTML = `<div class="tier-grid">
     <div class="tier-col"><div class="tier-head high"><span class="dot"></span>High tier<span class="cnt">${high.length}</span></div><div class="tier-body">${high.map(card).join('') || '<div class="empty">None</div>'}</div></div>
     <div class="tier-col"><div class="tier-head med"><span class="dot"></span>Normal<span class="cnt">${mid.length}</span></div><div class="tier-body">${mid.map(card).join('') || '<div class="empty">None</div>'}</div></div>
     <div class="tier-col"><div class="tier-head low"><span class="dot"></span>Low tier<span class="cnt">${low.length}</span></div><div class="tier-body">${low.map(card).join('') || '<div class="empty">None</div>'}</div></div>
   </div>`;
+
+  // by category — one column per managed category, plus an Uncategorized bucket for older/unmatched mail
+  const byCat = new Map(categories.map(c => [c.name, []]));
+  const uncategorized = [];
+  for (const e of list) {
+    if (e.category && byCat.has(e.category)) byCat.get(e.category).push(e);
+    else uncategorized.push(e);
+  }
+  const catCols = categories.map(c =>
+    `<div class="tier-col"><div class="tier-head"><span class="dot" style="background:var(--amber)"></span>${escapeHtml(c.name)}<span class="cnt">${byCat.get(c.name).length}</span></div><div class="tier-body">${byCat.get(c.name).map(card).join('') || '<div class="empty">None</div>'}</div></div>`
+  );
+  if (uncategorized.length) {
+    catCols.push(`<div class="tier-col"><div class="tier-head"><span class="dot" style="background:var(--muted-2)"></span>Uncategorized<span class="cnt">${uncategorized.length}</span></div><div class="tier-body">${uncategorized.map(card).join('')}</div></div>`);
+  }
+  $('slide-1').innerHTML = `<div class="tier-grid">${catCols.join('')}</div>`;
 }
 
 /* tabs */
@@ -434,7 +494,7 @@ function selectTab(el) {
   moveGlider(el);
   const idx = +el.dataset.slide;
   document.querySelectorAll('.slide').forEach((s, i) => s.classList.toggle('show', i === idx));
-  $('viewTitle').textContent = ['Inbox', 'By tier'][idx];
+  $('viewTitle').textContent = ['Inbox', 'By category', 'By tier'][idx];
 }
 tabs.forEach(t => t.addEventListener('click', () => selectTab(t)));
 window.addEventListener('load', () => moveGlider(document.querySelector('.tab.active')));

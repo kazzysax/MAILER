@@ -34,7 +34,9 @@ export function apiRouter() {
     }
     if (db.userByEmail(email.toLowerCase())) return res.status(400).json({ error: "Account already exists — log in." });
     const info = db.createUser(email.toLowerCase(), hashPassword(password));
-    res.cookie("xm", signSession(Number(info.lastInsertRowid)), { httpOnly: true, sameSite: "lax", maxAge: 30 * 24 * 3600 * 1000 });
+    const userId = Number(info.lastInsertRowid);
+    db.seedDefaultCategories(userId);
+    res.cookie("xm", signSession(userId), { httpOnly: true, sameSite: "lax", maxAge: 30 * 24 * 3600 * 1000 });
     res.json({ ok: true });
   });
 
@@ -70,7 +72,9 @@ export function apiRouter() {
         db.linkGoogleId(user.id, payload.sub);
       } else {
         const info = db.createGoogleUser(email, hashPassword(randomCode(32)), payload.sub);
-        user = db.userById(Number(info.lastInsertRowid));
+        const userId = Number(info.lastInsertRowid);
+        db.seedDefaultCategories(userId);
+        user = db.userById(userId);
       }
     }
     res.cookie("xm", signSession(user.id), { httpOnly: true, sameSite: "lax", maxAge: 30 * 24 * 3600 * 1000 });
@@ -147,6 +151,32 @@ export function apiRouter() {
   });
   r.delete("/templates/:id", auth, (req, res) => {
     db.delTemplate(req.user.id, Number(req.params.id));
+    res.json({ ok: true });
+  });
+
+  /* ---------- categories (customizable, seeded with defaults) ---------- */
+  r.get("/categories", auth, (req, res) => {
+    let cats = db.categoriesFor(req.user.id);
+    if (!cats.length) {
+      db.seedDefaultCategories(req.user.id);
+      cats = db.categoriesFor(req.user.id);
+    }
+    res.json(cats);
+  });
+  r.post("/categories", auth, (req, res) => {
+    const name = (req.body?.name || "").trim().slice(0, 30);
+    if (!name) return res.status(400).json({ error: "Category name required." });
+    const existing = db.categoriesFor(req.user.id);
+    if (existing.some((c) => c.name.toLowerCase() === name.toLowerCase())) {
+      return res.status(400).json({ error: "That category already exists." });
+    }
+    db.addCategory(req.user.id, name);
+    res.json({ ok: true });
+  });
+  r.delete("/categories/:id", auth, (req, res) => {
+    const existing = db.categoriesFor(req.user.id);
+    if (existing.length <= 1) return res.status(400).json({ error: "Keep at least one category." });
+    db.delCategory(req.user.id, Number(req.params.id));
     res.json({ ok: true });
   });
 
