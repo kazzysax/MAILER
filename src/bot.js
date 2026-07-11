@@ -1,7 +1,12 @@
+import path from "path";
+import { fileURLToPath } from "url";
 import TelegramBot from "node-telegram-bot-api";
 import { config } from "./config.js";
 import * as db from "./db.js";
 import { registerSender, onText, onAction } from "./engine.js";
+
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
+const LOGO_PATH = path.join(__dirname, "..", "public", "assets", "mailer-logo.jpeg");
 
 export function startTelegramBot() {
   const bot = new TelegramBot(config.telegramToken, { polling: true });
@@ -60,6 +65,7 @@ export function startTelegramBot() {
         const userId = db.consumeLinkCode(code);
         if (userId) {
           db.setTelegramChat(userId, chatId);
+          try { await bot.sendPhoto(chatId, LOGO_PATH); } catch (e) { console.error("Telegram sendPhoto failed:", e.message); }
           const user = db.userById(userId);
           return onText(user, "/start");
         }

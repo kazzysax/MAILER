@@ -80,6 +80,7 @@ for (const sql of [
   "ALTER TABLE emails ADD COLUMN claimed_by INTEGER",
   "ALTER TABLE emails ADD COLUMN scam_risk REAL",
   "ALTER TABLE emails ADD COLUMN scam_reasons TEXT",
+  "ALTER TABLE users ADD COLUMN google_id TEXT",
 ]) {
   try { db.exec(sql); } catch {}
 }
@@ -87,7 +88,11 @@ for (const sql of [
 /* ---------- users ---------- */
 export const createUser = (email, passHash) =>
   db.prepare("INSERT INTO users (email, pass_hash, created_at) VALUES (?,?,?)").run(email, passHash, Date.now());
+export const createGoogleUser = (email, passHash, googleId) =>
+  db.prepare("INSERT INTO users (email, pass_hash, google_id, created_at) VALUES (?,?,?,?)").run(email, passHash, googleId, Date.now());
 export const userByEmail = (email) => db.prepare("SELECT * FROM users WHERE email = ?").get(email);
+export const userByGoogleId = (googleId) => db.prepare("SELECT * FROM users WHERE google_id = ?").get(googleId);
+export const linkGoogleId = (userId, googleId) => db.prepare("UPDATE users SET google_id=? WHERE id=?").run(googleId, userId);
 export const userById = (id) => db.prepare("SELECT * FROM users WHERE id = ?").get(id);
 export const userByChat = (chatId) => db.prepare("SELECT * FROM users WHERE telegram_chat_id = ?").get(String(chatId));
 export const userByWhatsApp = (num) => db.prepare("SELECT * FROM users WHERE whatsapp_number = ?").get(num);

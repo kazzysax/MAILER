@@ -17,6 +17,7 @@ export const config = {
   model: "claude-sonnet-4-6",
   telegramToken: req("TELEGRAM_BOT_TOKEN"),
   telegramBotUsername: process.env.TELEGRAM_BOT_USERNAME || "MailerBot",
+  googleClientId: process.env.GOOGLE_CLIENT_ID || "",
   twilio: {
     sid: process.env.TWILIO_ACCOUNT_SID || "",
     token: process.env.TWILIO_AUTH_TOKEN || "",

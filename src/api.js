@@ -1,8 +1,11 @@
 import express from "express";
+import { OAuth2Client } from "google-auth-library";
 import { config } from "./config.js";
 import * as db from "./db.js";
 import { hashPassword, verifyPassword, signSession, verifySession, encrypt, randomCode } from "./crypto.js";
 import { testImap } from "./mailer.js";
+
+const googleClient = config.googleClientId ? new OAuth2Client(config.googleClientId) : null;
 
 export function apiRouter() {
   const r = express.Router();
@@ -17,6 +20,11 @@ export function apiRouter() {
     req.user = user;
     next();
   }
+
+  /* ---------- public config (safe to expose: OAuth client IDs are not secret) ---------- */
+  r.get("/config", (req, res) => {
+    res.json({ googleClientId: config.googleClientId || null });
+  });
 
   /* ---------- auth ---------- */
   r.post("/signup", (req, res) => {
@@ -35,6 +43,35 @@ export function apiRouter() {
     const user = db.userByEmail((email || "").toLowerCase());
     if (!user || !verifyPassword(password || "", user.pass_hash)) {
       return res.status(401).json({ error: "Wrong email or password." });
+    }
+    res.cookie("xm", signSession(user.id), { httpOnly: true, sameSite: "lax", maxAge: 30 * 24 * 3600 * 1000 });
+    res.json({ ok: true });
+  });
+
+  r.post("/auth/google", async (req, res) => {
+    if (!googleClient) return res.status(400).json({ error: "Google sign-in isn't enabled on this server." });
+    const { credential } = req.body || {};
+    if (!credential) return res.status(400).json({ error: "Missing Google credential." });
+    let payload;
+    try {
+      const ticket = await googleClient.verifyIdToken({ idToken: credential, audience: config.googleClientId });
+      payload = ticket.getPayload();
+    } catch {
+      return res.status(401).json({ error: "Could not verify Google sign-in. Please try again." });
+    }
+    if (!payload?.email || !payload.email_verified) {
+      return res.status(401).json({ error: "Your Google account has no verified email." });
+    }
+    const email = payload.email.toLowerCase();
+    let user = db.userByGoogleId(payload.sub);
+    if (!user) {
+      user = db.userByEmail(email);
+      if (user) {
+        db.linkGoogleId(user.id, payload.sub);
+      } else {
+        const info = db.createGoogleUser(email, hashPassword(randomCode(32)), payload.sub);
+        user = db.userById(Number(info.lastInsertRowid));
+      }
     }
     res.cookie("xm", signSession(user.id), { httpOnly: true, sameSite: "lax", maxAge: 30 * 24 * 3600 * 1000 });
     res.json({ ok: true });

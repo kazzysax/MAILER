@@ -4,6 +4,11 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>MAILER — never miss an email</title>
+<link rel="icon" type="image/x-icon" href="assets/favicon.ico?v=4">
+<link rel="icon" type="image/png" sizes="32x32" href="assets/favicon-32.png?v=4">
+<link rel="icon" type="image/png" sizes="192x192" href="assets/favicon-192.png?v=4">
+<link rel="apple-touch-icon" href="assets/apple-touch-icon.png?v=4">
+<script src="https://accounts.google.com/gsi/client" async defer onload="gsiReady=true; maybeInitGoogle()"></script>
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;700&family=Inter:wght@400;500;600&display=swap');
 *{box-sizing:border-box}
@@ -53,13 +58,23 @@ button:disabled{opacity:.45;cursor:not-allowed}
 .emailrow .subj{font-weight:600}
 .emailrow .sum{color:#9AA5BB;font-size:12.5px;margin-top:3px}
 .hidden{display:none}
+.g-signin{display:flex;justify-content:center;margin-bottom:10px}
+.or-divider{display:none;align-items:center;gap:10px;color:#7C879C;font-size:12px;margin:0 0 10px}
+.or-divider::before,.or-divider::after{content:"";flex:1;height:1px;background:#232B3E}
+.guide{background:#0F1420;border:1px solid #232B3E;border-radius:9px;padding:12px 14px;margin:8px 0}
+.guide summary{color:#3EC98E;font-weight:600;font-size:13px}
+.guide ol{margin:10px 0 0;padding-left:20px;color:#9AA5BB;font-size:12.5px;line-height:1.7}
+.pw-wrap{position:relative}
+.pw-wrap input{margin:5px 0;padding-right:40px}
+.pw-toggle{position:absolute;right:2px;top:50%;transform:translateY(-50%);background:none;border:none;color:#7C879C;cursor:pointer;font-size:16px;padding:8px}
+.pw-toggle:hover{color:#E8ECF4;border-color:transparent}
 code{background:#0F1420;border:1px solid #232B3E;padding:1px 6px;border-radius:5px;font-size:12px}
 </style>
 </head>
 <body>
 <div class="wrap">
   <header>
-    <span class="logo"><img src="assets/mailer-logo.jpeg?v=3" alt="MAILER" width="36" height="36"></span><span class="name">MAILER</span><span class="tag">Never miss an email.</span>
+    <span class="logo"><img src="assets/mailer-logo.jpeg?v=4" alt="MAILER" width="36" height="36"></span><span class="name">MAILER</span><span class="tag">Never miss an email.</span>
     <div class="right hidden" id="userbar">
       <span class="dim small" id="useremail"></span>
       <button onclick="logout()">Log out</button>
@@ -73,6 +88,8 @@ code{background:#0F1420;border:1px solid #232B3E;padding:1px 6px;border-radius:5
       <p>MAILER watches your business inbox, prioritizes by <strong>your</strong> rules, summarizes to the "so what", and pushes it to Telegram or WhatsApp. Replies are drafted your way and sent only after you approve. Nothing gets left out.</p>
     </div>
     <div class="card" style="max-width:420px;margin:0 auto">
+      <div class="g-signin" id="g-signin"></div>
+      <div class="or-divider" id="or-divider">or continue with email</div>
       <div class="row" style="margin-bottom:10px">
         <button class="primary grow" id="tab-signup" onclick="authTab('signup')">Sign up</button>
         <button class="grow" id="tab-login" onclick="authTab('login')">Log in</button>
@@ -91,8 +108,21 @@ code{background:#0F1420;border:1px solid #232B3E;padding:1px 6px;border-radius:5
       <h2>1 · Connect your inbox</h2>
       <div id="inbox-disconnected">
         <p class="dim small">Gmail: turn on 2-Step Verification, then create an <strong>App Password</strong> at myaccount.google.com/apppasswords — use that here, not your normal password. Any IMAP provider works.</p>
+        <details class="guide">
+          <summary>Guideline: how to get your app password ▾</summary>
+          <ol>
+            <li>Go to <b>myaccount.google.com/apppasswords</b></li>
+            <li>Turn on 2-Step Verification if it asks you to</li>
+            <li>Type a name like <b>MAILER</b>, then tap Create</li>
+            <li>Google shows a 16-letter password — copy it</li>
+            <li>Paste it below, then tap the 👁 to check for spaces</li>
+          </ol>
+        </details>
         <input id="in-user" type="email" placeholder="Inbox address — you@gmail.com">
-        <input id="in-pass" type="password" placeholder="App password">
+        <div class="pw-wrap">
+          <input id="in-pass" type="password" placeholder="App password">
+          <button type="button" class="pw-toggle" onclick="togglePw('in-pass', this)" aria-label="Show password">👁</button>
+        </div>
         <details class="dim small" style="margin:6px 0"><summary>Advanced (non-Gmail hosts)</summary>
           <div class="row">
             <input id="in-imaphost" class="grow" placeholder="IMAP host (default imap.gmail.com)">
@@ -224,6 +254,40 @@ async function doAuth() {
   } catch (e) { showMsg('auth-msg', e.message); }
 }
 async function logout() { await api('/logout', { method: 'POST' }); location.reload(); }
+
+function togglePw(id, btn) {
+  const el = $(id);
+  const show = el.type === 'password';
+  el.type = show ? 'text' : 'password';
+  btn.textContent = show ? '🙈' : '👁';
+  btn.setAttribute('aria-label', show ? 'Hide password' : 'Show password');
+}
+
+/* ---------- Sign in with Google ---------- */
+let gsiReady = false;
+let googleClientId = null;
+
+function maybeInitGoogle() {
+  if (!gsiReady || !googleClientId || !window.google) return;
+  google.accounts.id.initialize({ client_id: googleClientId, callback: handleGoogleCredential });
+  google.accounts.id.renderButton($('g-signin'), { theme: 'filled_black', size: 'large', width: 320, text: 'continue_with' });
+  $('or-divider').style.display = 'flex';
+}
+
+async function handleGoogleCredential(response) {
+  try {
+    await api('/auth/google', { method: 'POST', body: { credential: response.credential } });
+    boot();
+  } catch (e) { showMsg('auth-msg', e.message); }
+}
+
+(async function initGoogleConfig() {
+  try {
+    const cfg = await api('/config');
+    googleClientId = cfg.googleClientId;
+    maybeInitGoogle();
+  } catch {}
+})();
 
 /* ---------- boot / status ---------- */
 async function boot() {
