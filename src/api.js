@@ -3,9 +3,9 @@ import { OAuth2Client } from "google-auth-library";
 import { config } from "./config.js";
 import * as db from "./db.js";
 import { hashPassword, verifyPassword, signSession, verifySession, encrypt, randomCode } from "./crypto.js";
-import { testImap, fetchNewEmailsFor } from "./mailer.js";
+import { testImap, fetchNewEmailsFor, sendReplyFor } from "./mailer.js";
 import { processIncoming } from "./engine.js";
-import { extractFields } from "./ai.js";
+import { extractFields, draftReply, fillTemplate } from "./ai.js";
 
 const googleClient = config.googleClientId ? new OAuth2Client(config.googleClientId) : null;
 
@@ -282,6 +282,49 @@ export function apiRouter() {
       res.json({ ok: true, new: fresh.length });
     } catch (e) {
       res.status(500).json({ error: "Could not check your inbox: " + e.message });
+    }
+  });
+
+  /* ---------- reply portal (dashboard): draft, fill template, send for real ---------- */
+  r.post("/emails/:id/draft", auth, async (req, res) => {
+    const email = await db.emailById(req.params.id);
+    if (!email || email.userId !== req.user.id) return res.status(404).json({ error: "Email not found." });
+    const instruction = (req.body?.instruction || "").trim();
+    if (!instruction) return res.status(400).json({ error: "Tell me what you want the reply to say." });
+    try {
+      const draft = await draftReply(email, instruction);
+      res.json({ draft });
+    } catch (e) {
+      res.status(500).json({ error: "Drafting failed: " + e.message });
+    }
+  });
+
+  r.post("/emails/:id/fill-template", auth, async (req, res) => {
+    const email = await db.emailById(req.params.id);
+    if (!email || email.userId !== req.user.id) return res.status(404).json({ error: "Email not found." });
+    const tpl = await db.templateById(req.user.id, Number(req.body?.templateId));
+    if (!tpl) return res.status(404).json({ error: "Template not found." });
+    try {
+      const draft = await fillTemplate(email, tpl);
+      res.json({ draft });
+    } catch (e) {
+      res.status(500).json({ error: "Template fill failed: " + e.message });
+    }
+  });
+
+  r.post("/emails/:id/send", auth, async (req, res) => {
+    const email = await db.emailById(req.params.id);
+    if (!email || email.userId !== req.user.id) return res.status(404).json({ error: "Email not found." });
+    const body = (req.body?.body || "").trim();
+    if (!body) return res.status(400).json({ error: "Reply can't be empty." });
+    if (!req.user.mail_user) return res.status(400).json({ error: "Connect your inbox first." });
+    try {
+      await sendReplyFor(req.user, email, body);
+      await db.updateEmail(email.id, { sentReply: body, status: "done" });
+      await db.addAwaiting(req.user.id, email.fromAddr || email.from, email.subject);
+      res.json({ ok: true });
+    } catch (e) {
+      res.status(500).json({ error: "Send failed: " + e.message });
     }
   });
 

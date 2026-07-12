@@ -169,6 +169,22 @@ textarea:focus,.mini-row input:focus,.mini-row select:focus,.tname:focus{outline
 .db-portal button:hover:not(:disabled){border-color:var(--amber)}
 .db-portal button:disabled{opacity:.5;cursor:not-allowed}
 .db-portal .hint{font-size:11.5px;color:var(--muted-2)}
+.reply-box{margin:11px 0;padding:12px;background:var(--ink);border:1px solid var(--line);border-radius:8px}
+.reply-controls{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.reply-controls input,.reply-controls select{background:var(--ink-2);border:1px solid var(--line);color:var(--paper);border-radius:7px;padding:7px 9px;font-size:12px;font-family:'Satoshi'}
+.reply-controls input{flex:1;min-width:160px}
+.reply-controls button{background:var(--ink-3);border:1px solid var(--line);color:var(--paper);border-radius:7px;padding:7px 12px;font-size:12px;font-weight:600;white-space:nowrap}
+.reply-controls button:hover:not(:disabled){border-color:var(--amber)}
+.reply-controls button:disabled{opacity:.5;cursor:not-allowed}
+.reply-draft{margin-top:10px}
+.reply-draft textarea{width:100%;background:var(--ink-2);border:1px solid var(--line);color:var(--paper);border-radius:7px;padding:10px;font-family:'Satoshi';font-size:13px;margin-bottom:8px;resize:vertical}
+.reply-actions{display:flex;gap:8px}
+.reply-actions button{flex:1;padding:9px;border-radius:7px;font-weight:700;font-size:12.5px;border:none}
+.reply-actions button:disabled{opacity:.6;cursor:not-allowed}
+.reply-actions .send{background:var(--amber);color:var(--ink)}
+.reply-actions .send:hover:not(:disabled){background:#ff7f47}
+.reply-actions .discard{background:var(--ink-3);border:1px solid var(--line) !important;color:var(--muted)}
+.replied-note{background:var(--teal-soft);border:1px solid rgba(57,178,125,.35);border-radius:7px;padding:9px 12px;font-size:12.5px;color:var(--teal);margin:11px 0}
 </style>
 </head>
 <body>
@@ -286,6 +302,7 @@ const $ = (id) => document.getElementById(id);
 let emails = [];
 let categories = [];
 let dbTables = [];
+let templates = [];
 let me = null;
 
 async function api(path, opts = {}) {
@@ -388,11 +405,11 @@ async function addPriority() {
 }
 
 async function loadTemplates() {
-  const t = await api('/templates');
+  templates = await api('/templates');
   const list = $('tmList');
   list.innerHTML = '';
-  $('tmCount').textContent = t.length;
-  for (const x of t) {
+  $('tmCount').textContent = templates.length;
+  for (const x of templates) {
     const row = document.createElement('div');
     row.className = 'tmpl';
     row.innerHTML = `📄 ${escapeHtml(x.name)}`;
@@ -402,6 +419,7 @@ async function loadTemplates() {
     row.appendChild(del);
     list.appendChild(row);
   }
+  renderEmails();
 }
 
 async function addTemplate() {
@@ -540,6 +558,60 @@ async function extractToDb(emailId, btn) {
   }
 }
 
+/* ---------- reply portal: draft, fill template, send for real ---------- */
+async function generateDraft(emailId, btn) {
+  const instr = $('instr-' + emailId).value.trim();
+  if (!instr) { alert("Tell me what you want the reply to say."); return; }
+  btn.disabled = true;
+  const original = btn.textContent;
+  btn.textContent = 'Drafting…';
+  try {
+    const { draft } = await api('/emails/' + emailId + '/draft', { method: 'POST', body: { instruction: instr } });
+    $('draftText-' + emailId).value = draft;
+    $('draftWrap-' + emailId).classList.remove('hidden');
+  } catch (e) { alert(e.message); }
+  btn.disabled = false;
+  btn.textContent = original;
+}
+
+async function useTemplateForReply(emailId, btn) {
+  const sel = $('tplsel-' + emailId);
+  const templateId = sel.value;
+  if (!templateId) { alert('Pick a template first.'); return; }
+  btn.disabled = true;
+  const original = btn.textContent;
+  btn.textContent = 'Filling…';
+  try {
+    const { draft } = await api('/emails/' + emailId + '/fill-template', { method: 'POST', body: { templateId: Number(templateId) } });
+    $('draftText-' + emailId).value = draft;
+    $('draftWrap-' + emailId).classList.remove('hidden');
+  } catch (e) { alert(e.message); }
+  btn.disabled = false;
+  btn.textContent = original;
+}
+
+function discardDraft(emailId) {
+  $('draftWrap-' + emailId).classList.add('hidden');
+}
+
+async function sendReply(emailId, btn) {
+  const text = $('draftText-' + emailId).value.trim();
+  if (!text) { alert('Draft is empty.'); return; }
+  if (!confirm('Send this reply now? This sends a real email from your connected inbox.')) return;
+  btn.disabled = true;
+  const original = btn.textContent;
+  btn.textContent = 'Sending…';
+  try {
+    await api('/emails/' + emailId + '/send', { method: 'POST', body: { body: text } });
+    btn.textContent = '✓ Sent';
+    setTimeout(() => loadEmails(), 700);
+  } catch (e) {
+    alert(e.message);
+    btn.disabled = false;
+    btn.textContent = original;
+  }
+}
+
 async function loadEmails() {
   emails = await api('/emails');
   renderEmails();
@@ -601,6 +673,23 @@ function renderEmails() {
              <button type="button" onclick="extractToDb('${e.id}', this)">＋ Add to database</button>
            </div>`
         : `<div class="db-portal hint" onclick="event.stopPropagation()">Create a database folder in the sidebar to save this email's data.</div>`;
+      const sentReply = e.sentReply || e.sent_reply;
+      const replyBox = sentReply
+        ? `<div class="replied-note">✅ Replied: ${escapeHtml(sentReply.slice(0, 200))}${sentReply.length > 200 ? '…' : ''}</div>`
+        : `<div class="reply-box" onclick="event.stopPropagation()">
+             <div class="reply-controls">
+               <input id="instr-${e.id}" placeholder="Tone/instructions — e.g. 'polite but firm, payment by Friday'">
+               <button type="button" onclick="generateDraft('${e.id}', this)">✍️ Draft reply</button>
+               ${templates.length ? `<select id="tplsel-${e.id}"><option value="">Use a template…</option>${templates.map(t => `<option value="${t.id}">${escapeHtml(t.name)}</option>`).join('')}</select><button type="button" onclick="useTemplateForReply('${e.id}', this)">📋 Fill</button>` : ''}
+             </div>
+             <div class="reply-draft hidden" id="draftWrap-${e.id}">
+               <textarea id="draftText-${e.id}" rows="5"></textarea>
+               <div class="reply-actions">
+                 <button class="send" type="button" onclick="sendReply('${e.id}', this)">✅ Send reply</button>
+                 <button class="discard" type="button" onclick="discardDraft('${e.id}')">✕ Discard</button>
+               </div>
+             </div>
+           </div>`;
       return `<div class="mailrow ${pri}${risk ? ' risk' : ''}" onclick="toggle(this)">
         <div class="mail-head">
           <div class="stamp"><span class="mo">${mo}</span><span class="da">${da}</span></div>
@@ -614,7 +703,7 @@ function renderEmails() {
           <div class="bfield"><span class="k">From</span><span class="v mono">${escapeHtml(e.from || '')}</span></div>
           <div class="bfield"><span class="k">Subject</span><span class="v">${escapeHtml(e.subject || '')}</span></div>
           <div class="bfield"><span class="k">Summary</span><span class="v">${escapeHtml(e.summary || '—')}</span></div>
-          ${highlights}${action}${riskHtml}${dbPortal}
+          ${highlights}${action}${riskHtml}${replyBox}${dbPortal}
         </div></div>
       </div>`;
     }).join('');
