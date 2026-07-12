@@ -424,7 +424,10 @@ async function loadRules() {
     chip.innerHTML = `<span class="pill ${r.level}">${r.level}</span>${escapeHtml(r.value)}`;
     const x = document.createElement('button');
     x.className = 'x'; x.type = 'button'; x.textContent = '×';
-    x.onclick = async () => { await api('/rules/' + r.id, { method: 'DELETE' }); loadRules(); };
+    x.onclick = async () => {
+      if (!confirm(`Delete the "${r.value}" rule?`)) return;
+      await api('/rules/' + r.id, { method: 'DELETE' }); loadRules();
+    };
     chip.appendChild(x);
     list.appendChild(chip);
   }
@@ -454,7 +457,10 @@ async function loadTemplates() {
     row.innerHTML = `📄 ${escapeHtml(x.name)}`;
     const del = document.createElement('button');
     del.className = 'x'; del.type = 'button'; del.textContent = '×';
-    del.onclick = async () => { await api('/templates/' + x.id, { method: 'DELETE' }); loadTemplates(); };
+    del.onclick = async () => {
+      if (!confirm(`Delete the "${x.name}" template?`)) return;
+      await api('/templates/' + x.id, { method: 'DELETE' }); loadTemplates();
+    };
     row.appendChild(del);
     list.appendChild(row);
   }
@@ -486,6 +492,7 @@ async function loadCategories() {
     const x = document.createElement('button');
     x.className = 'x'; x.type = 'button'; x.textContent = '×';
     x.onclick = async () => {
+      if (!confirm(`Delete the "${c.name}" category?`)) return;
       try { await api('/categories/' + c.id, { method: 'DELETE' }); loadCategories(); renderEmails(); }
       catch (e) { alert(e.message); }
     };
@@ -524,6 +531,7 @@ async function loadDbTables() {
     del.className = 'x'; del.type = 'button'; del.textContent = '×';
     del.onclick = async (ev) => {
       ev.stopPropagation();
+      if (!confirm(`Delete the "${t.name}" folder? This also deletes all ${t.rowCount} saved row${t.rowCount === 1 ? '' : 's'} in it — this can't be undone.`)) return;
       await api('/dbtables/' + t.id, { method: 'DELETE' });
       loadDbTables();
     };
@@ -569,6 +577,7 @@ async function openDbTable(id) {
 }
 
 async function deleteDbRow(tableId, rowId) {
+  if (!confirm('Delete this row? This can\'t be undone.')) return;
   await api('/dbtables/' + tableId + '/rows/' + rowId, { method: 'DELETE' });
   openDbTable(tableId);
   loadDbTables();
