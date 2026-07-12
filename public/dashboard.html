@@ -189,10 +189,10 @@ textarea:focus,.mini-row input:focus,.mini-row select:focus,.tname:focus{outline
 .co-row:hover{border-color:var(--amber)}
 .co-total{color:var(--muted-2);font-size:10.5px;font-family:'JetBrains Mono'}
 .co-badge{margin-left:auto;background:var(--amber);color:var(--ink);font-family:'JetBrains Mono';font-size:10px;font-weight:700;padding:1px 7px;border-radius:20px;box-shadow:0 0 8px rgba(255,107,44,.55)}
-.assistant{position:fixed;left:20px;bottom:20px;z-index:500;display:flex;flex-direction:column;align-items:flex-start;gap:12px;isolation:isolate}
-.assistant-fab{width:52px;height:52px;border-radius:50%;background:var(--amber);color:var(--ink);border:none;font-size:22px;display:grid;place-items:center;cursor:pointer;box-shadow:0 10px 28px -8px rgba(255,107,44,.6);transition:transform .15s}
+.assistant-fab{position:fixed;z-index:500;width:52px;height:52px;border-radius:50%;background:var(--amber);color:var(--ink);border:none;font-size:22px;display:grid;place-items:center;cursor:grab;box-shadow:0 10px 28px -8px rgba(255,107,44,.6);transition:transform .15s;touch-action:none;isolation:isolate}
 .assistant-fab:hover{transform:scale(1.06)}
-.assistant-panel{width:340px;max-width:calc(100vw - 40px);max-height:calc(100vh - 100px);background:var(--ink-2);border:1px solid var(--line-2);border-radius:12px;box-shadow:0 30px 70px -15px rgba(0,0,0,.9),0 0 0 1px rgba(0,0,0,.4);display:flex;flex-direction:column;overflow:hidden}
+.assistant-fab.dragging{cursor:grabbing;transition:none;transform:scale(1.08)}
+.assistant-panel{position:fixed;z-index:500;width:340px;max-width:calc(100vw - 40px);max-height:calc(100vh - 100px);background:var(--ink-2);border:1px solid var(--line-2);border-radius:12px;box-shadow:0 30px 70px -15px rgba(0,0,0,.9),0 0 0 1px rgba(0,0,0,.4);display:flex;flex-direction:column;overflow:hidden;isolation:isolate}
 .assistant-head{display:flex;align-items:center;padding:11px 14px;border-bottom:1px solid var(--line);font-weight:700;font-size:13px}
 .assistant-head .x{margin-left:auto;background:none;border:none;color:var(--muted-2);font-size:18px;cursor:pointer}
 .assistant-head .x:hover{color:var(--paper)}
@@ -331,17 +331,15 @@ textarea:focus,.mini-row input:focus,.mini-row select:focus,.tname:focus{outline
   </div>
 </div>
 
-<div class="assistant" id="assistant">
-  <div class="assistant-panel hidden" id="assistantPanel">
-    <div class="assistant-head">Ask MAILER <button class="x" type="button" onclick="toggleAssistant()">×</button></div>
-    <div class="assistant-log" id="assistantLog"></div>
-    <div class="assistant-input-row">
-      <input id="assistantInput" placeholder="e.g. 'show me Bybit emails' or 'add a category called Legal'" onkeydown="if(event.key==='Enter') sendAssistantCommand()">
-      <button type="button" id="assistantSend" onclick="sendAssistantCommand()">➤</button>
-    </div>
+<div class="assistant-panel hidden" id="assistantPanel">
+  <div class="assistant-head">Ask MAILER <button class="x" type="button" onclick="toggleAssistant()">×</button></div>
+  <div class="assistant-log" id="assistantLog"></div>
+  <div class="assistant-input-row">
+    <input id="assistantInput" placeholder="e.g. 'show me Bybit emails' or 'add a category called Legal'" onkeydown="if(event.key==='Enter') sendAssistantCommand()">
+    <button type="button" id="assistantSend" onclick="sendAssistantCommand()">➤</button>
   </div>
-  <button class="assistant-fab" id="assistantFab" onclick="toggleAssistant()" title="Ask MAILER">💬</button>
 </div>
+<button class="assistant-fab" id="assistantFab" title="Drag to move · click to ask MAILER">💬</button>
 
 <script>
 const $ = (id) => document.getElementById(id);
@@ -892,12 +890,112 @@ document.addEventListener('click', e => {
   if (a && !a.contains(e.target)) $('acctMenu').classList.remove('open');
 });
 
-/* ---------- AI dashboard assistant (text-based, bottom-left) ---------- */
+/* ---------- AI dashboard assistant (draggable, floats above everything) ---------- */
+const assistantFab = $('assistantFab');
+const FAB_SIZE = 52, FAB_MARGIN = 16;
+
+function clampFabPos(left, top) {
+  const maxLeft = window.innerWidth - FAB_SIZE - FAB_MARGIN;
+  const maxTop = window.innerHeight - FAB_SIZE - FAB_MARGIN;
+  return { left: Math.min(Math.max(FAB_MARGIN, left), Math.max(FAB_MARGIN, maxLeft)), top: Math.min(Math.max(FAB_MARGIN, top), Math.max(FAB_MARGIN, maxTop)) };
+}
+
+function loadFabPos() {
+  let pos;
+  try { pos = JSON.parse(localStorage.getItem('mailerFabPos')); } catch { pos = null; }
+  if (!pos || typeof pos.left !== 'number' || typeof pos.top !== 'number') {
+    pos = { left: FAB_MARGIN, top: window.innerHeight - FAB_SIZE - FAB_MARGIN };
+  }
+  return clampFabPos(pos.left, pos.top);
+}
+
+function setFabPos(left, top) {
+  const p = clampFabPos(left, top);
+  assistantFab.style.left = p.left + 'px';
+  assistantFab.style.top = p.top + 'px';
+  return p;
+}
+
+(function initFabPosition() {
+  const p = loadFabPos();
+  setFabPos(p.left, p.top);
+})();
+
+function positionAssistantPanel() {
+  const panel = $('assistantPanel');
+  const fabRect = assistantFab.getBoundingClientRect();
+  const panelW = 340, margin = 12;
+  let left = fabRect.left;
+  if (left + panelW > window.innerWidth - 8) left = window.innerWidth - panelW - 8;
+  left = Math.max(8, left);
+
+  const spaceBelow = window.innerHeight - fabRect.bottom;
+  const spaceAbove = fabRect.top;
+  if (spaceBelow >= 320 || spaceBelow >= spaceAbove) {
+    panel.style.top = (fabRect.bottom + margin) + 'px';
+    panel.style.bottom = 'auto';
+  } else {
+    panel.style.bottom = (window.innerHeight - fabRect.top + margin) + 'px';
+    panel.style.top = 'auto';
+  }
+  panel.style.left = left + 'px';
+}
+
 function toggleAssistant() {
   const panel = $('assistantPanel');
+  const willShow = panel.classList.contains('hidden');
   panel.classList.toggle('hidden');
-  if (!panel.classList.contains('hidden')) $('assistantInput').focus();
+  if (willShow) {
+    positionAssistantPanel();
+    $('assistantInput').focus();
+  }
 }
+
+/* drag-to-move, with click-vs-drag detection so tapping still opens the panel */
+(function enableFabDrag() {
+  let dragging = false, moved = false, startX = 0, startY = 0, startLeft = 0, startTop = 0;
+  const DRAG_THRESHOLD = 5;
+
+  assistantFab.addEventListener('pointerdown', (e) => {
+    dragging = true; moved = false;
+    startX = e.clientX; startY = e.clientY;
+    const rect = assistantFab.getBoundingClientRect();
+    startLeft = rect.left; startTop = rect.top;
+    assistantFab.setPointerCapture(e.pointerId);
+    assistantFab.classList.add('dragging');
+  });
+
+  assistantFab.addEventListener('pointermove', (e) => {
+    if (!dragging) return;
+    const dx = e.clientX - startX, dy = e.clientY - startY;
+    if (Math.abs(dx) > DRAG_THRESHOLD || Math.abs(dy) > DRAG_THRESHOLD) moved = true;
+    if (!moved) return;
+    setFabPos(startLeft + dx, startTop + dy);
+    if (!$('assistantPanel').classList.contains('hidden')) positionAssistantPanel();
+  });
+
+  function endDrag(e) {
+    if (!dragging) return;
+    dragging = false;
+    assistantFab.classList.remove('dragging');
+    try { assistantFab.releasePointerCapture(e.pointerId); } catch {}
+    if (moved) {
+      const rect = assistantFab.getBoundingClientRect();
+      localStorage.setItem('mailerFabPos', JSON.stringify({ left: rect.left, top: rect.top }));
+    } else {
+      toggleAssistant(); // no real movement — treat as a click
+    }
+  }
+  assistantFab.addEventListener('pointerup', endDrag);
+  assistantFab.addEventListener('pointercancel', endDrag);
+})();
+
+window.addEventListener('resize', () => {
+  const rect = assistantFab.getBoundingClientRect();
+  const p = setFabPos(rect.left, rect.top);
+  localStorage.setItem('mailerFabPos', JSON.stringify(p));
+  if (!$('assistantPanel').classList.contains('hidden')) positionAssistantPanel();
+});
 
 function addAssistantMsg(text, cls) {
   const log = $('assistantLog');
