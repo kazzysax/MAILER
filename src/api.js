@@ -5,7 +5,7 @@ import * as db from "./db.js";
 import { hashPassword, verifyPassword, signSession, verifySession, encrypt, randomCode } from "./crypto.js";
 import { testImap, fetchNewEmailsFor, sendReplyFor } from "./mailer.js";
 import { processIncoming } from "./engine.js";
-import { extractFields, draftReply, fillTemplate } from "./ai.js";
+import { extractFields, draftReply, fillTemplate, interpretCommand } from "./ai.js";
 
 const googleClient = config.googleClientId ? new OAuth2Client(config.googleClientId) : null;
 
@@ -325,6 +325,70 @@ export function apiRouter() {
       res.json({ ok: true });
     } catch (e) {
       res.status(500).json({ error: "Send failed: " + e.message });
+    }
+  });
+
+  /* ---------- AI voice/text assistant (bottom-left dashboard widget) ---------- */
+  r.post("/assistant", auth, async (req, res) => {
+    const text = (req.body?.text || "").trim();
+    if (!text) return res.status(400).json({ error: "Say or type a command." });
+    let result;
+    try {
+      result = await interpretCommand(text);
+    } catch (e) {
+      return res.status(500).json({ error: "Assistant failed: " + e.message });
+    }
+    try {
+      switch (result.action) {
+        case "add_rule": {
+          const type = result.type, level = result.level, value = String(result.value || "").trim();
+          if (["sender", "domain", "keyword"].includes(type) && ["high", "low"].includes(level) && value) {
+            await db.addRule(req.user.id, type, value, level);
+          } else {
+            result = { action: "unknown", message: "I wasn't sure how to set that rule up — try 'mark emails containing invoice as high priority'." };
+          }
+          break;
+        }
+        case "add_category": {
+          const name = String(result.name || "").trim().slice(0, 30);
+          if (name) {
+            const existing = await db.categoriesFor(req.user.id);
+            if (!existing.some((c) => c.name.toLowerCase() === name.toLowerCase())) {
+              await db.addCategory(req.user.id, name);
+            }
+          } else {
+            result = { action: "unknown", message: "What should the category be called?" };
+          }
+          break;
+        }
+        case "create_folder": {
+          const name = String(result.name || "").trim().slice(0, 40);
+          const fields = Array.isArray(result.fields)
+            ? [...new Set(result.fields.map((f) => String(f || "").trim().slice(0, 40)).filter(Boolean))].slice(0, 12)
+            : [];
+          if (name && fields.length) {
+            await db.createDataTable(req.user.id, name, fields);
+          } else {
+            result = { action: "unknown", message: "Tell me the folder name and which fields to store, e.g. 'create a folder called Invoices with sender, amount, and due date'." };
+          }
+          break;
+        }
+        case "add_template": {
+          const name = String(result.name || "").trim().slice(0, 60);
+          const content = String(result.content || "").trim();
+          if (name && content) {
+            await db.addTemplate(req.user.id, name, content);
+          } else {
+            result = { action: "unknown", message: "Give me a template name and the text to save." };
+          }
+          break;
+        }
+        default:
+          break; // view_emails/view_category/view_tier/search/refresh_inbox/unknown are handled client-side
+      }
+      res.json(result);
+    } catch (e) {
+      res.status(500).json({ error: "Couldn't do that: " + e.message });
     }
   });
 
