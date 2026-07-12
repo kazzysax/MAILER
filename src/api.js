@@ -352,6 +352,32 @@ export function apiRouter() {
     }
   });
 
+  /* ---------- finish / reopen (dashboard: no mail left behind) ---------- */
+  r.post("/emails/:id/done", auth, async (req, res) => {
+    const email = await db.emailById(req.params.id);
+    if (!email || email.userId !== req.user.id) return res.status(404).json({ error: "Email not found." });
+    const done = req.body?.done !== false;
+    await db.updateEmail(email.id, { status: done ? "done" : "new" });
+    res.json({ ok: true, status: done ? "done" : "new" });
+  });
+
+  /* ---------- reminder / alarm (dashboard equivalent of the Telegram snooze buttons) ---------- */
+  r.post("/emails/:id/snooze", auth, async (req, res) => {
+    const email = await db.emailById(req.params.id);
+    if (!email || email.userId !== req.user.id) return res.status(404).json({ error: "Email not found." });
+    let { until } = req.body || {};
+    if (until != null) {
+      until = Number(until);
+      if (!Number.isFinite(until) || until <= Date.now()) {
+        return res.status(400).json({ error: "Pick a reminder time in the future." });
+      }
+    } else {
+      until = null;
+    }
+    await db.updateEmail(email.id, { snoozedUntil: until });
+    res.json({ ok: true, snoozedUntil: until });
+  });
+
   /* ---------- AI voice/text assistant (bottom-left dashboard widget) ---------- */
   r.post("/assistant", auth, async (req, res) => {
     const text = (req.body?.text || "").trim();

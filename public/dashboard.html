@@ -15,7 +15,7 @@
 :root{
   --ink:#000000;--ink-2:#0B0B0B;--ink-3:#141414;--line:#242424;--line-2:#333333;
   --paper:#F7F5F1;--muted:#8C8C8C;--muted-2:#5C5C5C;
-  --amber:#FF6B2C;--amber-soft:#2B180D;--teal:#39B27D;--teal-soft:#0F2119;
+  --amber:#FF6B2C;--amber-soft:#2B180D;--teal:#39B27D;--teal-soft:#0F2119;--neo:#39FF8D;--neo-soft:#0C2418;
   --red:#E5645C;--red-soft:#301412;--radius:11px;
 }
 *{box-sizing:border-box;margin:0;padding:0}
@@ -111,6 +111,23 @@ textarea:focus,.mini-row input:focus,.mini-row select:focus,.tname:focus{outline
 .mailrow.normal,.mailrow.med{--stripe:#c9c05a}
 .mailrow.low{--stripe:var(--muted-2)}
 .mailrow.risk{--stripe:var(--red)}
+.mailrow.done{--stripe:var(--neo);background:linear-gradient(180deg,rgba(57,255,141,.14),var(--ink-2) 60%);border-color:rgba(57,255,141,.45)}
+.mailrow.done:hover{box-shadow:-3px 0 0 0 var(--neo),0 0 26px -8px rgba(57,255,141,.55)}
+.mail-actions{display:flex;align-items:center;gap:6px;position:relative}
+.act-btn{background:var(--ink-3);border:1px solid var(--line);color:var(--muted);border-radius:7px;width:30px;height:30px;display:grid;place-items:center;font-size:13px;flex-shrink:0;transition:border-color .15s,color .15s}
+.act-btn:hover{border-color:var(--line-2);color:var(--paper)}
+.act-btn.finish.active{background:var(--neo-soft);border-color:rgba(57,255,141,.5);color:var(--neo)}
+.act-btn.alarm.active{background:var(--amber-soft);border-color:rgba(255,107,44,.5);color:var(--amber)}
+.snooze-wrap{position:relative}
+.snooze-pop{position:absolute;right:0;top:36px;z-index:30;width:220px;background:var(--ink-2);border:1px solid var(--line-2);border-radius:10px;padding:9px;box-shadow:0 24px 50px -20px rgba(0,0,0,.85);display:flex;flex-direction:column;gap:6px}
+.snooze-pop.hidden{display:none}
+.snooze-pop button{background:var(--ink);border:1px solid var(--line);color:var(--paper);border-radius:7px;padding:7px 9px;font-size:12px;text-align:left}
+.snooze-pop button:hover{border-color:var(--line-2)}
+.snooze-current{font-size:11.5px;color:var(--amber);background:var(--amber-soft);border-radius:7px;padding:6px 9px}
+.snooze-custom{display:flex;gap:6px}
+.snooze-custom input{flex:1;background:var(--ink);border:1px solid var(--line);color:var(--paper);border-radius:7px;padding:6px 7px;font-size:11.5px;font-family:'Satoshi'}
+.snooze-custom button{flex-shrink:0;width:44px;text-align:center}
+.reminder-badge{display:inline-flex;align-items:center;gap:5px;background:var(--amber-soft);color:var(--amber);border:1px solid rgba(255,107,44,.35);border-radius:20px;padding:3px 10px;font-size:11.5px;font-weight:600;margin-right:8px}
 .mail-head{display:flex;align-items:center;gap:14px;padding:14px 17px 14px 20px;cursor:pointer}
 .stamp{width:44px;height:48px;border:1.5px dashed var(--line-2);border-radius:6px;display:flex;flex-direction:column;align-items:center;justify-content:center;flex-shrink:0;background:var(--ink)}
 .stamp .mo{font-family:'JetBrains Mono';font-size:9px;color:var(--muted-2);text-transform:uppercase}
@@ -385,6 +402,14 @@ function senderName(from) {
   if (!from) return 'Unknown';
   const m = String(from).match(/^"?([^"<]+)"?\s*</);
   return (m ? m[1] : from).trim().slice(0, 40) || 'Unknown';
+}
+
+function formatReminder(ts) {
+  const d = new Date(Number(ts));
+  const now = new Date();
+  const sameDay = d.toDateString() === now.toDateString();
+  const time = d.toLocaleTimeString('en', { hour: 'numeric', minute: '2-digit' });
+  return sameDay ? `Today ${time}` : `${d.toLocaleString('en', { month: 'short', day: 'numeric' })} ${time}`;
 }
 
 function priClass(p) {
@@ -672,6 +697,73 @@ async function loadEmails() {
   renderEmails();
 }
 
+/* ---------- finish + reminder (no mail left behind) ---------- */
+async function toggleDone(id) {
+  const e = emails.find(x => String(x.id) === String(id));
+  const done = !(e && e.status === 'done');
+  try {
+    await api('/emails/' + id + '/done', { method: 'POST', body: { done } });
+    await loadEmails();
+  } catch (err) {
+    alert(err.message);
+  }
+}
+
+function toggleSnoozePop(id) {
+  document.querySelectorAll('.snooze-pop').forEach(p => {
+    if (p.id !== 'snoozePop-' + id) p.classList.add('hidden');
+  });
+  $('snoozePop-' + id).classList.toggle('hidden');
+}
+
+function snoozeUntilFor(preset) {
+  const now = Date.now();
+  if (preset === '1h') return now + 60 * 60 * 1000;
+  if (preset === '3d') return now + 3 * 24 * 60 * 60 * 1000;
+  if (preset === 'tomorrow9') {
+    const d = new Date();
+    d.setDate(d.getDate() + 1);
+    d.setHours(9, 0, 0, 0);
+    return d.getTime();
+  }
+  return null;
+}
+
+async function setSnooze(id, preset) {
+  const until = snoozeUntilFor(preset);
+  try {
+    await api('/emails/' + id + '/snooze', { method: 'POST', body: { until } });
+    await loadEmails();
+  } catch (err) {
+    alert(err.message);
+  }
+}
+
+async function setSnoozeCustom(id) {
+  const input = $('snoozeCustom-' + id);
+  if (!input.value) return;
+  const until = new Date(input.value).getTime();
+  if (Number.isNaN(until) || until <= Date.now()) {
+    alert('Pick a reminder time in the future.');
+    return;
+  }
+  try {
+    await api('/emails/' + id + '/snooze', { method: 'POST', body: { until } });
+    await loadEmails();
+  } catch (err) {
+    alert(err.message);
+  }
+}
+
+async function clearSnooze(id) {
+  try {
+    await api('/emails/' + id + '/snooze', { method: 'POST', body: { until: null } });
+    await loadEmails();
+  } catch (err) {
+    alert(err.message);
+  }
+}
+
 async function refreshInbox() {
   const btn = $('refreshBtn');
   btn.disabled = true;
@@ -722,6 +814,26 @@ function renderEmails() {
       const highlights = e.highlights?.length
         ? `<div class="highlights-row">${e.highlights.map(h => `<span class="hl-pill">📌 ${escapeHtml(h)}</span>`).join('')}</div>`
         : '';
+      const isDone = (e.status === 'done');
+      const snoozedUntil = e.snoozedUntil || e.snoozed_until;
+      const hasReminder = snoozedUntil && Number(snoozedUntil) > Date.now();
+      const reminderBadge = hasReminder ? `<span class="reminder-badge">⏰ ${formatReminder(snoozedUntil)}</span>` : '';
+      const snoozePresets = [
+        { label: 'In 1 hour', preset: '1h' },
+        { label: 'Tomorrow 9am', preset: 'tomorrow9' },
+        { label: 'In 3 days', preset: '3d' },
+      ];
+      const mailActions = `<div class="mail-actions" onclick="event.stopPropagation()">
+        <button type="button" class="act-btn finish${isDone ? ' active' : ''}" title="${isDone ? 'Reopen' : 'Mark finished'}" onclick="toggleDone('${e.id}')">${isDone ? '↩' : '✅'}</button>
+        <div class="snooze-wrap">
+          <button type="button" class="act-btn alarm${hasReminder ? ' active' : ''}" title="Set a reminder" onclick="toggleSnoozePop('${e.id}')">⏰</button>
+          <div class="snooze-pop hidden" id="snoozePop-${e.id}">
+            ${hasReminder ? `<div class="snooze-current">⏰ ${formatReminder(snoozedUntil)}</div><button type="button" onclick="clearSnooze('${e.id}')">✕ Clear reminder</button>` : ''}
+            ${snoozePresets.map(s => `<button type="button" onclick="setSnooze('${e.id}','${s.preset}')">${s.label}</button>`).join('')}
+            <div class="snooze-custom"><input type="datetime-local" id="snoozeCustom-${e.id}"><button type="button" onclick="setSnoozeCustom('${e.id}')">Set</button></div>
+          </div>
+        </div>
+      </div>`;
       const dbPortal = dbTables.length
         ? `<div class="db-portal" onclick="event.stopPropagation()">
              <select>${dbTables.map(t => `<option value="${t.id}">${escapeHtml(t.name)}</option>`).join('')}</select>
@@ -745,14 +857,14 @@ function renderEmails() {
                </div>
              </div>
            </div>`;
-      return `<div class="mailrow ${pri}${risk ? ' risk' : ''}" onclick="toggle(this)">
+      return `<div class="mailrow ${pri}${risk ? ' risk' : ''}${isDone ? ' done' : ''}" onclick="toggle(this)">
         <div class="mail-head">
           <div class="stamp"><span class="mo">${mo}</span><span class="da">${da}</span></div>
           <div class="mail-main">
             <div class="mail-l1"><span class="pill ${pri}">${pri}</span><span class="mail-sender">${escapeHtml(senderName(e.from))}</span><span class="mail-email mono">${escapeHtml(e.from || '')}</span></div>
             <div class="mail-sum">${escapeHtml(e.summary || e.subject || '')}</div>
           </div>
-          <div class="mail-right"><span class="mono" style="font-size:10px;color:var(--muted-2)">${escapeHtml(e.status || '')}</span><span class="chev">▾</span></div>
+          <div class="mail-right">${reminderBadge}${mailActions}<span class="mono" style="font-size:10px;color:var(--muted-2)">${escapeHtml(e.status || '')}</span><span class="chev">▾</span></div>
         </div>
         <div class="mail-body"><div class="mail-body-inner">
           <div class="bfield"><span class="k">From</span><span class="v mono">${escapeHtml(e.from || '')}</span></div>
@@ -889,6 +1001,9 @@ window.addEventListener('resize', () => moveGlider(document.querySelector('.tab.
 document.addEventListener('click', e => {
   const a = document.querySelector('.acct');
   if (a && !a.contains(e.target)) $('acctMenu').classList.remove('open');
+  document.querySelectorAll('.snooze-wrap').forEach(w => {
+    if (!w.contains(e.target)) w.querySelector('.snooze-pop')?.classList.add('hidden');
+  });
 });
 
 /* ---------- AI dashboard assistant (draggable, floats above everything) ---------- */
