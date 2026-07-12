@@ -206,6 +206,26 @@ export function apiRouter() {
     res.json({ ok: true });
   });
 
+  /* ---------- blacklist (exact sender addresses — never people/domains, just mails) ---------- */
+  r.get("/blacklist", auth, async (req, res) => res.json(await db.blacklistFor(req.user.id)));
+  r.post("/blacklist", auth, async (req, res) => {
+    const address = (req.body?.address || "").trim().toLowerCase();
+    if (!/^[^\s@]+@[^\s@]+\.[a-z]{2,}$/i.test(address)) return res.status(400).json({ error: "Enter a valid email address to blacklist." });
+    await db.addBlacklist(req.user.id, address);
+    res.json({ ok: true });
+  });
+  r.delete("/blacklist/:id", auth, async (req, res) => {
+    await db.delBlacklist(req.user.id, Number(req.params.id));
+    res.json({ ok: true });
+  });
+  r.post("/emails/:id/blacklist", auth, async (req, res) => {
+    const email = await db.emailById(req.params.id);
+    if (!email || email.userId !== req.user.id) return res.status(404).json({ error: "Email not found." });
+    if (!email.fromAddr) return res.status(400).json({ error: "This email has no sender address to blacklist." });
+    await db.addBlacklist(req.user.id, email.fromAddr.toLowerCase());
+    res.json({ ok: true, address: email.fromAddr.toLowerCase() });
+  });
+
   /* ---------- custom data tables (merchant-defined extraction folders) ---------- */
   r.get("/dbtables", auth, async (req, res) => {
     const tables = await db.dataTablesFor(req.user.id);

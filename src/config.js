@@ -28,6 +28,7 @@ export const config = {
   pushNormal: (process.env.PUSH_NORMAL || "true").toLowerCase() !== "false",
   digestHour: Number(process.env.DIGEST_HOUR || 8),
   nudgeDays: Number(process.env.NUDGE_DAYS || 3),
+  scamCheckEnabled: (process.env.SCAM_CHECK_ENABLED || "true").toLowerCase() !== "false",
 
   // optional: voice-note transcription (OpenAI Whisper). Leave blank to disable.
   openaiKey: process.env.OPENAI_API_KEY || "",

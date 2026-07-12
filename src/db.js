@@ -123,6 +123,13 @@ CREATE TABLE IF NOT EXISTS businesses (
   domain TEXT NOT NULL,
   created_at BIGINT NOT NULL
 );
+CREATE TABLE IF NOT EXISTS blacklist (
+  id SERIAL PRIMARY KEY,
+  user_id INTEGER NOT NULL,
+  address TEXT NOT NULL,
+  created_at BIGINT NOT NULL,
+  UNIQUE(user_id, address)
+);
 CREATE INDEX IF NOT EXISTS idx_emails_user ON emails(user_id, status);
 CREATE INDEX IF NOT EXISTS idx_data_rows_table ON data_rows(table_id);
 `);
@@ -138,6 +145,7 @@ for (const sql of [
   "ALTER TABLE users ADD COLUMN IF NOT EXISTS google_id TEXT",
   "ALTER TABLE emails ADD COLUMN IF NOT EXISTS category TEXT",
   "ALTER TABLE emails ADD COLUMN IF NOT EXISTS highlights TEXT",
+  "ALTER TABLE emails ADD COLUMN IF NOT EXISTS blocked BOOLEAN DEFAULT FALSE",
 ]) {
   await pool.query(sql);
 }
@@ -271,6 +279,17 @@ export const seedBusinessesFromEmails = async (userId) => {
   }
 };
 
+/* ---------- blacklist (exact sender addresses — never people/domains, just mails) ---------- */
+export const blacklistFor = (userId) => all("SELECT * FROM blacklist WHERE user_id = ? ORDER BY id DESC", [userId]);
+export const addBlacklist = (userId, address) =>
+  run("INSERT INTO blacklist (user_id, address, created_at) VALUES (?,?,?) ON CONFLICT (user_id, address) DO NOTHING", [userId, address, Date.now()]);
+export const delBlacklist = (userId, id) => run("DELETE FROM blacklist WHERE id = ? AND user_id = ?", [id, userId]);
+export const isBlacklisted = async (userId, address) => {
+  if (!address) return false;
+  const row = await get("SELECT id FROM blacklist WHERE user_id = ? AND address = ?", [userId, address.toLowerCase()]);
+  return !!row;
+};
+
 /* ---------- custom data tables (merchant-defined extraction folders) ---------- */
 const hydrateTable = (row) => row && { id: row.id, userId: row.user_id, name: row.name, fields: JSON.parse(row.fields), createdAt: row.created_at };
 const hydrateRow = (row) => row && { id: row.id, tableId: row.table_id, userId: row.user_id, emailId: row.email_id, values: JSON.parse(row.values_json), createdAt: row.created_at };
@@ -296,12 +315,12 @@ export const delDataRow = (userId, id) => run("DELETE FROM data_rows WHERE id = 
 
 /* ---------- emails ---------- */
 export const insertEmail = (e) =>
-  run(`INSERT INTO emails (id, user_id, uid, from_text, from_addr, subject, body, attachments, message_id, received_at, priority, summary, action, status, snoozed_until, sent_reply, category, highlights)
-       VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`,
+  run(`INSERT INTO emails (id, user_id, uid, from_text, from_addr, subject, body, attachments, message_id, received_at, priority, summary, action, status, snoozed_until, sent_reply, category, highlights, blocked)
+       VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`,
     [e.id, e.userId, e.uid ?? null, e.from ?? null, e.fromAddr ?? null, e.subject ?? null, e.body ?? null,
      JSON.stringify(e.attachments || []), e.messageId ?? null, e.receivedAt ?? Date.now(),
      e.priority ?? null, e.summary ?? null, e.action ?? null, e.status || "new",
-     e.snoozedUntil ?? null, e.sentReply ?? null, e.category ?? null, JSON.stringify(e.highlights || [])]);
+     e.snoozedUntil ?? null, e.sentReply ?? null, e.category ?? null, JSON.stringify(e.highlights || []), !!e.blocked]);
 
 export const emailById = async (id) => hydrate(await get("SELECT * FROM emails WHERE id = ?", [id]));
 export const openEmailsFor = async (userId) =>
@@ -360,7 +379,8 @@ function hydrate(row) {
     priority: row.priority, summary: row.summary, action: row.action,
     status: row.status, snoozedUntil: row.snoozed_until, sentReply: row.sent_reply,
     pendingPush: row.pending_push, claimedBy: row.claimed_by, category: row.category,
-    highlights: JSON.parse(row.highlights || "[]"),
+    highlights: JSON.parse(row.highlights || "[]"), blocked: !!row.blocked,
+    scamRisk: row.scam_risk, scamReasons: row.scam_reasons,
   };
 }
 

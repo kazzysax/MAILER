@@ -3,7 +3,7 @@ import { computePriority } from "./rules.js";
 import { analyzeEmail, draftReply, fillTemplate, dailyRoundup } from "./ai.js";
 import { sendReplyFor } from "./mailer.js";
 import { config } from "./config.js";
-import { maybeScamCheck } from "./okx/scamcheck.js";
+import { maybeScamCheck } from "./scamcheck.js";
 
 const PRIORITY_ICON = { high: "🔴", normal: "🟢", low: "⚪" };
 
@@ -66,6 +66,7 @@ function emailButtons(e, hasTeam = false) {
     { label: "⏰ 1h", action: `s1:${e.id}` },
     { label: "⏰ Tmrw 9am", action: `st:${e.id}` },
     { label: "⏰ 3 days", action: `s3:${e.id}` },
+    { label: "🚫 Blacklist sender", action: `bl:${e.id}` },
   ];
   if (hasTeam) b.unshift({ label: "🙋 Claim", action: `cl:${e.id}` });
   return b;
@@ -81,11 +82,25 @@ function pickCategory(guess, categoryNames) {
 
 /* ---------- process a newly fetched email for a user ---------- */
 export async function processIncoming(user, email) {
+  const blocked = email.fromAddr ? await db.isBlacklisted(user.id, email.fromAddr) : false;
+  email.blocked = blocked;
+  const categories = await db.categoriesFor(user.id);
+  const categoryNames = categories.map((c) => c.name);
+
+  if (blocked) {
+    // still fully tracked (no mail left behind) — just never analyzed or pushed
+    email.priority = "low";
+    email.summary = "🚫 Blacklisted sender — auto-filtered, not pushed.";
+    email.highlights = [];
+    email.category = categoryNames.includes("Other") ? "Other" : categoryNames[0] || null;
+    await db.insertEmail(email);
+    if (email.fromAddr) await db.clearAwaiting(user.id, email.fromAddr);
+    return;
+  }
+
   const rules = await db.rulesFor(user.id);
   const pr = computePriority(email, rules);
   email.priority = pr.level;
-  const categories = await db.categoriesFor(user.id);
-  const categoryNames = categories.map((c) => c.name);
   try {
     const a = await analyzeEmail(email, categoryNames);
     email.summary = a.summary;
@@ -100,10 +115,12 @@ export async function processIncoming(user, email) {
   }
   await db.insertEmail(email);
 
-  // Tier 2: MAILER hires a scam-check agent for suspicious mail (pays via x402, never blocks)
+  // scam-risk scoring for suspicious mail (never blocks — flags only)
   try {
     const known = await db.knownSendersFor(user.id);
-    const scam = await maybeScamCheck(email, known);
+    const businesses = await db.businessesFor(user.id);
+    const trustedDomains = new Set(businesses.map((b) => b.domain.toLowerCase()));
+    const scam = await maybeScamCheck(email, known, trustedDomains);
     if (scam) {
       email.scam = scam;
       await db.updateEmail(email.id, { scamRisk: scam.risk, scamReasons: JSON.stringify(scam.reasons) });
@@ -446,6 +463,11 @@ export async function onAction(user, action) {
       }
       await db.updateEmail(id, { snoozedUntil: until });
       return sendToUser(user, `⏰ Snoozed "${email.subject}" — I'll bring it back. Nothing gets left out.`);
+    }
+    case "bl": {
+      if (!email.fromAddr) return sendToUser(user, "Can't blacklist — no sender address on this email.");
+      await db.addBlacklist(owner.id, email.fromAddr.toLowerCase());
+      return sendToUser(user, `🚫 Blacklisted ${email.fromAddr} — future mail from this exact address won't reach you (still logged on the dashboard, never fully lost). Manage your list anytime from the dashboard.`);
     }
     default:
       return sendToUser(user, "Unknown action.");
