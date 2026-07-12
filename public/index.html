@@ -35,6 +35,17 @@ body::after{content:"";position:fixed;inset:0;z-index:-2;pointer-events:none;
              radial-gradient(circle at 6% 30%,rgba(255,107,44,.05),transparent 40%)}
 .mono{font-family:'JetBrains Mono',monospace;letter-spacing:0}
 a{color:inherit;text-decoration:none}
+/* scroll reveal */
+.reveal{opacity:0;transform:translateY(28px);transition:opacity .75s cubic-bezier(.2,.7,.2,1),transform .75s cubic-bezier(.2,.7,.2,1)}
+.reveal.in{opacity:1;transform:none}
+.stagger>*{opacity:0;transform:translateY(28px);transition:opacity .7s cubic-bezier(.2,.7,.2,1),transform .7s cubic-bezier(.2,.7,.2,1)}
+.stagger.in>*{opacity:1;transform:none}
+.stagger.in>*:nth-child(2){transition-delay:.07s}
+.stagger.in>*:nth-child(3){transition-delay:.14s}
+.stagger.in>*:nth-child(4){transition-delay:.21s}
+.stagger.in>*:nth-child(5){transition-delay:.28s}
+.stagger.in>*:nth-child(6){transition-delay:.35s}
+@media(prefers-reduced-motion:reduce){.reveal,.stagger>*{opacity:1;transform:none;transition:none}}
 .wrap{max-width:1160px;margin:0 auto;padding:0 26px}
 nav{position:sticky;top:0;z-index:50;background:rgba(0,0,0,.7);backdrop-filter:blur(20px) saturate(1.3);border-bottom:1px solid var(--line)}
 .nav-inner{display:flex;align-items:center;gap:14px;height:72px}
@@ -112,7 +123,7 @@ h1 .amber{background:linear-gradient(120deg,var(--amber-2),var(--amber));-webkit
 .slips b{color:var(--amber)}
 
 /* —— stats strip —— */
-.strip{border-top:1px solid var(--line);border-bottom:1px solid var(--line);background:rgba(11,11,11,.75);backdrop-filter:blur(10px)}
+.strip{border-top:1px solid var(--line);border-bottom:1px solid var(--line);background:rgba(11,11,11,.5);backdrop-filter:blur(16px) saturate(1.2)}
 .strip-inner{display:flex;gap:0;flex-wrap:wrap}
 .stat{flex:1;min-width:150px;display:flex;flex-direction:column;gap:6px;padding:26px 26px;border-right:1px solid var(--line)}
 .stat:last-child{border-right:none}
@@ -132,9 +143,10 @@ h2 .amber{color:var(--amber)}
 .principles{display:grid;grid-template-columns:repeat(3,1fr);gap:16px}
 @media(max-width:900px){.principles{grid-template-columns:repeat(2,1fr)}}
 @media(max-width:600px){.principles{grid-template-columns:1fr}}
-.prin{position:relative;background:linear-gradient(180deg,rgba(22,22,22,.9),var(--ink-2));border:1px solid var(--line);border-radius:var(--radius);padding:28px;transition:transform .25s,border-color .25s,box-shadow .25s;overflow:hidden}
-.prin::before{content:"";position:absolute;inset:0;border-radius:inherit;padding:1px;background:linear-gradient(140deg,rgba(255,107,44,.5),transparent 40%);-webkit-mask:linear-gradient(#000 0 0) content-box,linear-gradient(#000 0 0);-webkit-mask-composite:xor;mask-composite:exclude;opacity:0;transition:opacity .25s}
-.prin:hover{transform:translateY(-4px);border-color:rgba(255,107,44,.28);box-shadow:0 22px 50px -28px rgba(255,107,44,.4)}
+.prin{position:relative;background:linear-gradient(180deg,rgba(30,30,30,.5),rgba(11,11,11,.4));backdrop-filter:blur(16px) saturate(1.15);border:1px solid rgba(255,255,255,.07);border-radius:var(--radius);padding:28px;transition:transform .3s cubic-bezier(.2,.7,.2,1),border-color .3s,box-shadow .3s;overflow:hidden;box-shadow:0 1px 0 rgba(255,255,255,.05) inset,0 20px 40px -30px rgba(0,0,0,.8)}
+.prin::before{content:"";position:absolute;inset:0;border-radius:inherit;padding:1px;background:linear-gradient(140deg,rgba(255,107,44,.55),transparent 42%);-webkit-mask:linear-gradient(#000 0 0) content-box,linear-gradient(#000 0 0);-webkit-mask-composite:xor;mask-composite:exclude;opacity:0;transition:opacity .3s}
+.prin::after{content:"";position:absolute;top:0;left:12%;right:12%;height:1px;background:linear-gradient(90deg,transparent,rgba(255,255,255,.18),transparent)}
+.prin:hover{transform:translateY(-6px);border-color:rgba(255,107,44,.3);box-shadow:0 30px 60px -30px rgba(255,107,44,.45),0 1px 0 rgba(255,255,255,.08) inset}
 .prin:hover::before{opacity:1}
 .prin-ic{width:46px;height:46px;border-radius:12px;background:linear-gradient(160deg,var(--ink-3),#0c0c0c);border:1px solid var(--line-2);display:grid;place-items:center;margin-bottom:18px}
 .prin-ic svg{width:22px;height:22px;stroke:var(--amber);stroke-width:1.8;fill:none;stroke-linecap:round;stroke-linejoin:round}
@@ -153,8 +165,8 @@ h2 .amber{color:var(--amber)}
 /* —— how it reads —— */
 .views{display:grid;grid-template-columns:repeat(3,1fr);gap:16px}
 @media(max-width:800px){.views{grid-template-columns:1fr}}
-.view{background:var(--ink);border:1px solid var(--line);border-radius:var(--radius);padding:26px;transition:border-color .2s,transform .2s}
-.view:hover{border-color:var(--line-2);transform:translateY(-3px)}
+.view{position:relative;background:linear-gradient(180deg,rgba(20,20,20,.5),rgba(0,0,0,.4));backdrop-filter:blur(14px);border:1px solid rgba(255,255,255,.06);border-radius:var(--radius);padding:26px;transition:border-color .25s,transform .25s,box-shadow .25s;box-shadow:0 1px 0 rgba(255,255,255,.04) inset}
+.view:hover{border-color:rgba(255,107,44,.22);transform:translateY(-4px);box-shadow:0 24px 46px -30px rgba(255,107,44,.35)}
 .view-tab{display:inline-block;font-family:'JetBrains Mono';font-size:10.5px;letter-spacing:.1em;text-transform:uppercase;color:var(--amber);border:1px solid rgba(255,107,44,.22);background:rgba(255,107,44,.05);padding:4px 10px;border-radius:6px;margin-bottom:17px}
 .view h3{font-weight:700;font-size:17px;margin-bottom:8px}
 .view p{color:var(--muted);font-size:14px;line-height:1.6}
@@ -242,7 +254,7 @@ footer{border-top:1px solid var(--line);padding:40px 0;color:var(--muted-2);font
 </header>
 
 <div class="strip">
-  <div class="wrap strip-inner">
+  <div class="wrap strip-inner stagger reveal-root">
     <div class="stat"><span class="n">3<span class="amber">×</span></span><span class="l">Web · Telegram · WhatsApp</span></div>
     <div class="stat"><span class="n">0</span><span class="l">Emails left behind</span></div>
     <div class="stat"><span class="n">&lt;60<span class="amber">s</span></span><span class="l">Inbox to your chat</span></div>
@@ -252,12 +264,12 @@ footer{border-top:1px solid var(--line);padding:40px 0;color:var(--muted-2);font
 
 <section id="principles">
   <div class="wrap">
-    <div class="sec-head">
+    <div class="sec-head reveal">
       <div class="sec-eyebrow">Our working principles</div>
       <h2>Six principles.<br>One promise: <span class="amber">no mail left behind.</span></h2>
       <p>Most inbox tools help you read faster. MAILER is built so nothing ever falls through — from the mail that matters to the one you never want to see again.</p>
     </div>
-    <div class="principles">
+    <div class="principles stagger reveal-root">
       <div class="prin">
         <span class="idx mono">01</span>
         <div class="prin-ic"><svg viewBox="0 0 24 24"><path d="M3 13h4l2 3h6l2-3h4"/><path d="M5 5h14l2 8v5a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1v-5z"/></svg></div>
@@ -300,7 +312,7 @@ footer{border-top:1px solid var(--line);padding:40px 0;color:var(--muted-2);font
 
 <div class="motto">
   <div class="glow-line"></div>
-  <div class="wrap">
+  <div class="wrap reveal">
     <div class="tag">Our mail motto</div>
     <h2>No mail<br><span class="amber">left behind.</span></h2>
     <p>Not the invoice. Not the complaint. Not the one you meant to answer last Tuesday.</p>
@@ -309,12 +321,12 @@ footer{border-top:1px solid var(--line);padding:40px 0;color:var(--muted-2);font
 
 <section id="views">
   <div class="wrap">
-    <div class="sec-head">
+    <div class="sec-head reveal">
       <div class="sec-eyebrow">How it reads</div>
       <h2>Three ways to see your inbox.</h2>
       <p>MAILER organizes your mail the way a business actually thinks — pick the lens that fits the moment.</p>
     </div>
-    <div class="views">
+    <div class="views stagger reveal-root">
       <div class="view"><span class="view-tab">01 · Emails</span><h3>By date</h3><p>Every email, summarized, newest first — sender, date, and the “so what” at a glance.</p></div>
       <div class="view"><span class="view-tab">02 · Category</span><h3>By type</h3><p>Payment slips, complaints, requests — grouped the way your company already files them.</p></div>
       <div class="view"><span class="view-tab">03 · Tier &amp; Spam</span><h3>By risk &amp; rules</h3><p>You set high, normal, low. Suspicious mail lands in its own flagged view, reason attached.</p></div>
@@ -324,7 +336,7 @@ footer{border-top:1px solid var(--line);padding:40px 0;color:var(--muted-2);font
 
 <section id="cta" style="padding-top:24px">
   <div class="wrap">
-    <div class="cta-band">
+    <div class="cta-band reveal">
       <div class="glow-c"></div>
       <div class="sec-eyebrow" style="text-align:center">Ready when you are</div>
       <h2>Stop checking email.<br>Let MAILER make sure <span class="amber">nothing slips.</span></h2>
@@ -343,5 +355,41 @@ footer{border-top:1px solid var(--line);padding:40px 0;color:var(--muted-2);font
     <div class="mono" style="font-size:12px">No mail left behind.</div>
   </div>
 </footer>
+<script>
+(function(){
+  var reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+  // scroll reveals
+  var targets = document.querySelectorAll('.reveal, .reveal-root');
+  if (reduce || !('IntersectionObserver' in window)) {
+    targets.forEach(function(t){ t.classList.add('in'); });
+  } else {
+    var io = new IntersectionObserver(function(entries){
+      entries.forEach(function(e){
+        if (e.isIntersecting){ e.target.classList.add('in'); io.unobserve(e.target); }
+      });
+    }, { threshold: 0.14, rootMargin: '0px 0px -8% 0px' });
+    targets.forEach(function(t){ io.observe(t); });
+  }
+
+  // cursor parallax on the hero envelope (shifts the 3D vanishing point — no conflict with the float animation)
+  var stage = document.querySelector('.stage');
+  var halo = document.querySelector('.halo');
+  if (stage && !reduce){
+    var hero = document.querySelector('.hero');
+    hero.addEventListener('pointermove', function(ev){
+      var r = hero.getBoundingClientRect();
+      var dx = (ev.clientX - r.left) / r.width - 0.5;   // -0.5..0.5
+      var dy = (ev.clientY - r.top) / r.height - 0.5;
+      stage.style.perspectiveOrigin = (50 + dx * 26) + '% ' + (50 + dy * 26) + '%';
+      if (halo) halo.style.transform = 'translate(calc(-50% + ' + (dx * 20) + 'px), calc(-50% + ' + (dy * 20) + 'px))';
+    });
+    hero.addEventListener('pointerleave', function(){
+      stage.style.perspectiveOrigin = '50% 50%';
+      if (halo) halo.style.transform = 'translate(-50%,-50%)';
+    });
+  }
+})();
+</script>
 </body>
 </html>
