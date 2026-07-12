@@ -43,11 +43,12 @@ export async function fetchNewEmailsFor(user) {
     try {
       const since = new Date(Date.now() - 3 * 24 * 3600 * 1000);
       const uids = await client.search({ since }, { uid: true });
-      const fresh = (uids || []).filter((u) => !db.isSeen(user.id, u));
+      const seenChecks = await Promise.all((uids || []).map((u) => db.isSeen(user.id, u)));
+      const fresh = (uids || []).filter((u, i) => !seenChecks[i]);
 
       for (const u of fresh) {
         const msg = await client.fetchOne(u, { source: true }, { uid: true });
-        db.markSeen(user.id, u);
+        await db.markSeen(user.id, u);
         if (!msg || !msg.source) continue;
         const parsed = await simpleParser(msg.source);
         const fromAddr = parsed.from?.value?.[0]?.address || "";
@@ -93,14 +94,15 @@ export async function fetchForwardInbox() {
     try {
       const since = new Date(Date.now() - 3 * 24 * 3600 * 1000);
       const uids = await client.search({ since }, { uid: true });
-      const fresh = (uids || []).filter((u) => !db.isSeen(FORWARD_UID_OWNER, u));
+      const seenChecks = await Promise.all((uids || []).map((u) => db.isSeen(FORWARD_UID_OWNER, u)));
+      const fresh = (uids || []).filter((u, i) => !seenChecks[i]);
       for (const u of fresh) {
         const msg = await client.fetchOne(u, { source: true }, { uid: true });
-        db.markSeen(FORWARD_UID_OWNER, u);
+        await db.markSeen(FORWARD_UID_OWNER, u);
         if (!msg || !msg.source) continue;
         const parsed = await simpleParser(msg.source);
         const forwarder = parsed.from?.value?.[0]?.address || "";
-        const user = db.userByAnyEmail(forwarder);
+        const user = await db.userByAnyEmail(forwarder);
         if (!user) continue; // forwarder isn't an MAILER user — ignore
 
         results.push({

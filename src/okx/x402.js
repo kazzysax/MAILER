@@ -97,7 +97,7 @@ export function requirePayment(amount, serviceName = "mailer-service") {
       const txHash = payload.txHash;
       if (!txHash) return res.status(400).json({ error: "X-Payment proof must include a txHash" });
 
-      if (db.isTxUsed(txHash)) {
+      if (await db.isTxUsed(txHash)) {
         return res.status(402).json({ error: "This payment has already been used for a previous call." });
       }
 
@@ -105,11 +105,11 @@ export function requirePayment(amount, serviceName = "mailer-service") {
         const verified = await verifyUsdtPayment(txHash, okx.walletAddress, amount);
         // atomic claim: DB primary key prevents a concurrent second request
         // from double-spending the same tx between verify and here
-        db.markTxUsed(txHash, serviceName, amount, verified.from);
+        await db.markTxUsed(txHash, serviceName, amount, verified.from);
         req.payment = { payer: verified.from, txRef: txHash, amount };
         return next();
       } catch (e) {
-        if (String(e.message).includes("UNIQUE constraint")) {
+        if (/UNIQUE constraint|duplicate key value/i.test(e.message)) {
           return res.status(402).json({ error: "This payment has already been used for a previous call." });
         }
         return res.status(402).json({ error: "Payment invalid: " + e.message });
