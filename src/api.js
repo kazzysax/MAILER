@@ -182,6 +182,30 @@ export function apiRouter() {
     res.json({ ok: true });
   });
 
+  /* ---------- businesses (sender organizations the merchant tracks) ---------- */
+  r.get("/businesses", auth, async (req, res) => {
+    let list = await db.businessesFor(req.user.id);
+    if (!list.length) {
+      await db.seedBusinessesFromEmails(req.user.id);
+      list = await db.businessesFor(req.user.id);
+    }
+    res.json(list);
+  });
+  r.post("/businesses", auth, async (req, res) => {
+    const name = (req.body?.name || "").trim().slice(0, 40);
+    const domain = (req.body?.domain || "").trim().toLowerCase().replace(/^@/, "").slice(0, 80);
+    if (!name) return res.status(400).json({ error: "Business name required." });
+    if (!/^[a-z0-9.-]+\.[a-z]{2,}$/.test(domain)) return res.status(400).json({ error: "Enter a valid domain, e.g. acme.com." });
+    const existing = await db.businessesFor(req.user.id);
+    if (existing.some((b) => b.domain === domain)) return res.status(400).json({ error: "That domain is already tracked." });
+    await db.addBusiness(req.user.id, name, domain);
+    res.json({ ok: true });
+  });
+  r.delete("/businesses/:id", auth, async (req, res) => {
+    await db.delBusiness(req.user.id, Number(req.params.id));
+    res.json({ ok: true });
+  });
+
   /* ---------- custom data tables (merchant-defined extraction folders) ---------- */
   r.get("/dbtables", auth, async (req, res) => {
     const tables = await db.dataTablesFor(req.user.id);
@@ -380,6 +404,17 @@ export function apiRouter() {
             await db.addTemplate(req.user.id, name, content);
           } else {
             result = { action: "unknown", message: "Give me a template name and the text to save." };
+          }
+          break;
+        }
+        case "add_business": {
+          const name = String(result.name || "").trim().slice(0, 40);
+          const domain = String(result.domain || "").trim().toLowerCase().replace(/^@/, "").slice(0, 80);
+          if (name && /^[a-z0-9.-]+\.[a-z]{2,}$/.test(domain)) {
+            const existing = await db.businessesFor(req.user.id);
+            if (!existing.some((b) => b.domain === domain)) await db.addBusiness(req.user.id, name, domain);
+          } else {
+            result = { action: "unknown", message: "Tell me the business name and its email domain, e.g. 'add a business called Acme at acme.com'." };
           }
           break;
         }

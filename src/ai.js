@@ -122,13 +122,13 @@ export async function dailyRoundup(openEmails) {
 
 const ASSISTANT_ACTIONS = [
   "view_emails", "view_category", "view_tier", "search", "refresh_inbox",
-  "add_rule", "add_category", "create_folder", "add_template", "unknown",
+  "add_rule", "add_category", "create_folder", "add_template", "add_business", "unknown",
 ];
 
 export async function interpretCommand(text) {
   const sys =
     "You are MAILER's dashboard voice/text assistant. Map the user's spoken or typed command to EXACTLY ONE action from the allowed list. " +
-    "Only choose add_rule/add_category/create_folder/add_template when the user clearly asked to create/add something — never invent field values that weren't said. " +
+    "Only choose add_rule/add_category/create_folder/add_template/add_business when the user clearly asked to create/add something — never invent field values that weren't said. " +
     "If the command is unclear, ambiguous, or destructive (e.g. delete/remove/send), use \"unknown\" and ask a brief clarifying question instead of guessing. " +
     "Respond ONLY with valid JSON, no fences, no preamble.";
   const user = `Allowed actions: ${ASSISTANT_ACTIONS.join(", ")}
@@ -136,7 +136,7 @@ export async function interpretCommand(text) {
 Command: "${text}"
 
 Return JSON with exactly these keys (omit any not relevant to the chosen action):
-{"action":"one of the allowed actions","message":"short friendly confirmation phrased as already done, or a brief clarifying question if action is unknown","query":"search text, for action=search only","type":"sender|domain|keyword, for action=add_rule only","value":"for action=add_rule only","level":"high|low, for action=add_rule only","name":"for action=add_category|create_folder|add_template","fields":["field names, for action=create_folder only"],"content":"for action=add_template only"}`;
+{"action":"one of the allowed actions","message":"short friendly confirmation phrased as already done, or a brief clarifying question if action is unknown","query":"search text, for action=search only","type":"sender|domain|keyword, for action=add_rule only","value":"for action=add_rule only","level":"high|low, for action=add_rule only","name":"for action=add_category|create_folder|add_template|add_business","fields":["field names, for action=create_folder only"],"content":"for action=add_template only","domain":"the business's email domain e.g. acme.com, for action=add_business only"}`;
   const raw = await callClaude(sys, user, 300);
   const p = parseJSONSafe(raw);
   if (!p || !ASSISTANT_ACTIONS.includes(p.action)) {

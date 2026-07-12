@@ -116,6 +116,13 @@ CREATE TABLE IF NOT EXISTS data_rows (
   values_json TEXT NOT NULL,
   created_at BIGINT NOT NULL
 );
+CREATE TABLE IF NOT EXISTS businesses (
+  id SERIAL PRIMARY KEY,
+  user_id INTEGER NOT NULL,
+  name TEXT NOT NULL,
+  domain TEXT NOT NULL,
+  created_at BIGINT NOT NULL
+);
 CREATE INDEX IF NOT EXISTS idx_emails_user ON emails(user_id, status);
 CREATE INDEX IF NOT EXISTS idx_data_rows_table ON data_rows(table_id);
 `);
@@ -223,6 +230,46 @@ export const categoriesFor = (userId) => all("SELECT * FROM categories WHERE use
 export const addCategory = (userId, name) =>
   run("INSERT INTO categories (user_id, name, created_at) VALUES (?,?,?)", [userId, name, Date.now()]);
 export const delCategory = (userId, id) => run("DELETE FROM categories WHERE id = ? AND user_id = ?", [id, userId]);
+
+/* ---------- businesses (sender organizations the merchant tracks) ---------- */
+const TWO_PART_TLDS = new Set(["co.uk", "org.uk", "com.ng", "co.ng", "org.ng", "com.au", "co.za", "co.in", "com.br"]);
+function rootDomain(host) {
+  const parts = host.split(".");
+  if (parts.length <= 2) return host;
+  const lastTwo = parts.slice(-2).join(".");
+  const lastThree = parts.slice(-3).join(".");
+  return TWO_PART_TLDS.has(lastTwo) ? lastThree : lastTwo;
+}
+function domainOf(email) {
+  const addr = (email.fromAddr || "").toLowerCase();
+  const m = addr.match(/@([^>\s]+)$/);
+  if (m) return rootDomain(m[1]);
+  return null;
+}
+function nameFromDomain(domain) {
+  const base = domain.split(".")[0];
+  return base.charAt(0).toUpperCase() + base.slice(1);
+}
+
+export const businessesFor = (userId) => all("SELECT * FROM businesses WHERE user_id = ? ORDER BY id", [userId]);
+export const addBusiness = (userId, name, domain) =>
+  run("INSERT INTO businesses (user_id, name, domain, created_at) VALUES (?,?,?,?)", [userId, name, domain, Date.now()]);
+export const delBusiness = (userId, id) => run("DELETE FROM businesses WHERE id = ? AND user_id = ?", [id, userId]);
+
+/* seed an initial business list from the user's most frequent sender domains */
+export const seedBusinessesFromEmails = async (userId) => {
+  const recent = await recentEmailsFor(userId, 200);
+  const counts = new Map();
+  for (const e of recent) {
+    const domain = domainOf(e);
+    if (!domain) continue;
+    counts.set(domain, (counts.get(domain) || 0) + 1);
+  }
+  const top = [...counts.entries()].sort((a, b) => b[1] - a[1]).slice(0, 8);
+  for (const [domain] of top) {
+    await addBusiness(userId, nameFromDomain(domain), domain);
+  }
+};
 
 /* ---------- custom data tables (merchant-defined extraction folders) ---------- */
 const hydrateTable = (row) => row && { id: row.id, userId: row.user_id, name: row.name, fields: JSON.parse(row.fields), createdAt: row.created_at };
