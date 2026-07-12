@@ -139,6 +139,8 @@ export async function sendReplyFor(user, email, bodyText) {
   const transporter = nodemailer.createTransport({
     host: c.smtpHost, port: c.smtpPort, secure: c.smtpPort === 465,
     auth: { user: c.mailUser, pass: c.mailPass },
+    connectionTimeout: 15000, // fail fast instead of hanging ~2min on a blocked port
+    greetingTimeout: 15000,
   });
   const subject = /^re:/i.test(email.subject) ? email.subject : `Re: ${email.subject}`;
   const mail = { from: c.mailUser, to: email.fromAddr || email.from, subject, text: bodyText };
@@ -146,5 +148,15 @@ export async function sendReplyFor(user, email, bodyText) {
     mail.inReplyTo = email.messageId;
     mail.references = email.messageId;
   }
-  await transporter.sendMail(mail);
+  try {
+    await transporter.sendMail(mail);
+  } catch (e) {
+    if (/timeout|ETIMEDOUT|ESOCKET|ECONNREFUSED/i.test(e.message || e.code || "")) {
+      throw new Error(
+        `Could not reach ${c.smtpHost}:${c.smtpPort} — your network, firewall, or antivirus is likely blocking outbound SMTP. ` +
+        `Try a different network (e.g. mobile hotspot), or if port ${c.smtpPort} is blocked, try the other common port (587 or 465, whichever you're not already on) in Advanced settings when reconnecting your inbox.`
+      );
+    }
+    throw e;
+  }
 }
