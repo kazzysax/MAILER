@@ -32,7 +32,7 @@ export function startTelegramBot() {
 
     // voice notes: transcribe -> treat the transcript as the user's message
     if (msg.voice || msg.audio) {
-      const user = db.userByChat(chatId);
+      const user = await db.userByChat(chatId);
       if (!user) return bot.sendMessage(chatId, `Link this chat first — sign up at ${config.baseUrl} and tap "Connect Telegram".`);
       const { voiceEnabled, transcribeTelegramVoice } = await import("./voice.js");
       if (!voiceEnabled()) {
@@ -62,18 +62,18 @@ export function startTelegramBot() {
     if (text.startsWith("/start")) {
       const code = text.split(/\s+/)[1];
       if (code) {
-        const userId = db.consumeLinkCode(code);
+        const userId = await db.consumeLinkCode(code);
         if (userId) {
-          db.setTelegramChat(userId, chatId);
+          await db.setTelegramChat(userId, chatId);
           try { await bot.sendPhoto(chatId, LOGO_PATH); } catch (e) { console.error("Telegram sendPhoto failed:", e.message); }
-          const user = db.userById(userId);
+          const user = await db.userById(userId);
           return onText(user, "/start");
         }
         return bot.sendMessage(chatId, "That link expired. Get a fresh one from your MAILER dashboard → Connect Telegram.");
       }
     }
 
-    const user = db.userByChat(chatId);
+    const user = await db.userByChat(chatId);
     if (!user) {
       return bot.sendMessage(chatId, `This chat isn't linked to an MAILER account yet.\n\nSign up at ${config.baseUrl}, connect your inbox, then tap "Connect Telegram" — it opens me with your personal link.`);
     }
@@ -82,7 +82,7 @@ export function startTelegramBot() {
 
   bot.on("callback_query", async (q) => {
     try { await bot.answerCallbackQuery(q.id); } catch {}
-    const user = db.userByChat(q.message.chat.id);
+    const user = await db.userByChat(q.message.chat.id);
     if (!user) return;
     await onAction(user, q.data);
   });

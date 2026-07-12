@@ -38,18 +38,19 @@ function isMuted(user) {
 }
 
 /* ---------- team fan-out ---------- */
-function recipientsFor(owner) {
-  const members = db.teamMembers(owner.id);
+async function recipientsFor(owner) {
+  const members = await db.teamMembers(owner.id);
   return [owner, ...members];
 }
 async function fanOut(owner, text, options) {
-  for (const r of recipientsFor(owner)) await sendToUser(r, text, options);
+  for (const r of await recipientsFor(owner)) await sendToUser(r, text, options);
 }
 
 /* ---------- formatting ---------- */
 function emailCard(e) {
   const p = e.priority || "normal";
   let text = `${PRIORITY_ICON[p]} ${p.toUpperCase()} — ${e.from}\n📧 ${e.subject}\n\n${e.summary || (e.body || "").slice(0, 200)}`;
+  if (e.highlights?.length) text += `\n\n📌 ${e.highlights.join(" · ")}`;
   if (e.action) text += `\n\n➡️ Action: ${e.action}`;
   if (e.attachments?.length) text += `\n📎 ${e.attachments.join(", ")}`;
   if (e.scam && e.scam.risk >= 0.5) {
@@ -80,59 +81,61 @@ function pickCategory(guess, categoryNames) {
 
 /* ---------- process a newly fetched email for a user ---------- */
 export async function processIncoming(user, email) {
-  const rules = db.rulesFor(user.id);
+  const rules = await db.rulesFor(user.id);
   const pr = computePriority(email, rules);
   email.priority = pr.level;
-  const categories = db.categoriesFor(user.id);
+  const categories = await db.categoriesFor(user.id);
   const categoryNames = categories.map((c) => c.name);
   try {
     const a = await analyzeEmail(email, categoryNames);
     email.summary = a.summary;
     email.action = a.action;
+    email.highlights = a.highlights;
     email.category = pickCategory(a.category, categoryNames);
   } catch (err) {
     console.error("Analyze failed:", err.message);
     email.summary = (email.body || "").slice(0, 200);
+    email.highlights = [];
     email.category = categoryNames.includes("Other") ? "Other" : categoryNames[0] || null;
   }
-  db.insertEmail(email);
+  await db.insertEmail(email);
 
   // Tier 2: MAILER hires a scam-check agent for suspicious mail (pays via x402, never blocks)
   try {
-    const known = db.knownSendersFor(user.id);
+    const known = await db.knownSendersFor(user.id);
     const scam = await maybeScamCheck(email, known);
     if (scam) {
       email.scam = scam;
-      db.updateEmail(email.id, { scamRisk: scam.risk, scamReasons: JSON.stringify(scam.reasons) });
+      await db.updateEmail(email.id, { scamRisk: scam.risk, scamReasons: JSON.stringify(scam.reasons) });
     }
   } catch (e) {
     console.error("scam-check error:", e.message);
   }
 
   // silence catcher: they replied — stop waiting on them
-  if (email.fromAddr) db.clearAwaiting(user.id, email.fromAddr);
+  if (email.fromAddr) await db.clearAwaiting(user.id, email.fromAddr);
 
   const shouldPush = pr.level === "high" || (pr.level === "normal" && config.pushNormal);
   if (!shouldPush) return; // low priority waits for the roundup — nothing gets left out
 
   if (isMuted(user)) {
-    db.setPendingPush(email.id, true); // queued for the "while you were away" batch
+    await db.setPendingPush(email.id, true); // queued for the "while you were away" batch
     return;
   }
-  const hasTeam = db.teamMembers(user.id).length > 0;
+  const hasTeam = (await db.teamMembers(user.id)).length > 0;
   await fanOut(user, emailCard(email), emailButtons(email, hasTeam));
 }
 
 /* ---------- flush queued pushes when mute ends ---------- */
 export async function flushPending() {
-  for (const user of db.usersWithInbox()) {
+  for (const user of await db.usersWithInbox()) {
     if (isMuted(user)) continue;
-    const pending = db.pendingPushFor(user.id);
+    const pending = await db.pendingPushFor(user.id);
     if (!pending.length) continue;
-    const hasTeam = db.teamMembers(user.id).length > 0;
+    const hasTeam = (await db.teamMembers(user.id)).length > 0;
     await sendToUser(user, `🌙 While you were away — ${pending.length} email${pending.length > 1 ? "s" : ""} came in:`);
     for (const e of pending) {
-      db.setPendingPush(e.id, false);
+      await db.setPendingPush(e.id, false);
       await fanOut(user, emailCard(e), emailButtons(e, hasTeam));
     }
   }
@@ -140,10 +143,10 @@ export async function flushPending() {
 
 /* ---------- silence catcher: nudge threads gone quiet ---------- */
 export async function checkSilence() {
-  for (const a of db.dueAwaiting(config.nudgeDays)) {
-    const user = db.userById(a.user_id);
-    if (!user) { db.dismissAwaiting(a.id); continue; }
-    db.markNudged(a.id);
+  for (const a of await db.dueAwaiting(config.nudgeDays)) {
+    const user = await db.userById(a.user_id);
+    if (!user) { await db.dismissAwaiting(a.id); continue; }
+    await db.markNudged(a.id);
     const days = Math.round((Date.now() - a.sent_at) / (24 * 3600 * 1000));
     await sendToUser(user, `🔕 Still silent: you replied to ${a.counterparty} about "${a.subject}" ${days} day${days > 1 ? "s" : ""} ago — no answer yet.`, [
       { label: "✍️ Draft a nudge", action: `ng:${a.id}` },
@@ -154,7 +157,7 @@ export async function checkSilence() {
 
 /* ---------- weekly report ---------- */
 export async function sendWeeklyReport(user) {
-  const s = db.weeklyStats(user.id);
+  const s = await db.weeklyStats(user.id);
   const top = s.topSenders.map((t, i) => `${i + 1}. ${t.f} (${t.c})`).join("\n") || "—";
   await sendToUser(user,
     `📊 MAILER weekly report\n\nEmails processed: ${s.total} (${s.high} high priority)\nHandled: ${s.done} · Replies sent: ${s.replies}\nStill open: ${s.open}\n\nBusiest senders:\n${top}\n\nNothing got left out. 💪`);
@@ -162,7 +165,7 @@ export async function sendWeeklyReport(user) {
 
 /* ---------- roundup ---------- */
 export async function sendRoundupFor(user) {
-  const open = db.openEmailsFor(user.id);
+  const open = await db.openEmailsFor(user.id);
   try {
     const text = await dailyRoundup(open);
     await sendToUser(user, `☀️ MAILER morning digest\n\n${text}`);
@@ -174,9 +177,9 @@ export async function sendRoundupFor(user) {
 
 /* ---------- snooze wakeups (all users) ---------- */
 export async function wakeSnoozed() {
-  for (const e of db.dueSnoozed()) {
-    db.updateEmail(e.id, { snoozedUntil: null });
-    const user = db.userById(e.userId);
+  for (const e of await db.dueSnoozed()) {
+    await db.updateEmail(e.id, { snoozedUntil: null });
+    const user = await db.userById(e.userId);
     if (user) await sendToUser(user, `⏰ Back from snooze:\n\n${emailCard(e)}`, emailButtons(e));
   }
 }
@@ -200,7 +203,7 @@ export async function onText(user, text) {
   const convo = convos.get(user.id) || null;
 
   if (convo?.mode === "awaiting_instruction" && !text.startsWith("/")) {
-    const email = db.emailById(convo.emailId);
+    const email = await db.emailById(convo.emailId);
     if (!email) { convos.delete(user.id); return sendToUser(user, "That email is gone."); }
     await sendToUser(user, "✍️ Drafting…");
     try {
@@ -221,7 +224,7 @@ export async function onText(user, text) {
     return sendToUser(user, `Template "${text.slice(0, 60)}". Now send the body — use placeholders like [client name], [amount], [date].`);
   }
   if (convo?.mode === "tpl_body" && !text.startsWith("/")) {
-    db.addTemplate(user.id, convo.name, text);
+    await db.addTemplate(user.id, convo.name, text);
     convos.delete(user.id);
     return sendToUser(user, `✅ Template "${convo.name}" saved.`);
   }
@@ -239,7 +242,7 @@ export async function onText(user, text) {
     case "/roundup":
       return sendRoundupFor(user);
     case "/rules": {
-      const rules = db.rulesFor(user.id);
+      const rules = await db.rulesFor(user.id);
       if (!rules.length) return sendToUser(user, "No rules yet. Add one:\n/addrule keyword invoice high");
       return sendToUser(user, "Priority rules:\n" + rules.map((r) => `#${r.id} [${r.level.toUpperCase()}] ${r.type} contains "${r.value}"`).join("\n") + "\n\nRemove with /delrule <id>");
     }
@@ -250,17 +253,17 @@ export async function onText(user, text) {
       if (!["sender", "domain", "keyword"].includes(type) || !["high", "low"].includes(level) || !value) {
         return sendToUser(user, "Format: /addrule <sender|domain|keyword> <value> <high|low>");
       }
-      db.addRule(user.id, type, value, level);
+      await db.addRule(user.id, type, value, level);
       return sendToUser(user, `✅ Rule added: ${type} "${value}" → ${level.toUpperCase()}`);
     }
     case "/delrule": {
       const id = Number(rest[0]);
       if (!id) return sendToUser(user, "Give the rule id from /rules.");
-      db.delRule(user.id, id);
+      await db.delRule(user.id, id);
       return sendToUser(user, "Removed (if it was yours).");
     }
     case "/templates": {
-      const t = db.templatesFor(user.id);
+      const t = await db.templatesFor(user.id);
       if (!t.length) return sendToUser(user, "No templates yet. /addtemplate");
       return sendToUser(user, "Templates:\n" + t.map((x) => `#${x.id} ${x.name}`).join("\n"));
     }
@@ -270,21 +273,22 @@ export async function onText(user, text) {
     case "/find": {
       const q = rest.join(" ").trim();
       if (!q) return sendToUser(user, "What should I search for? e.g. /find acme invoice");
-      const hits = db.searchEmails(user.id, q);
+      const hits = await db.searchEmails(user.id, q);
       if (!hits.length) return sendToUser(user, `Nothing found for "${q}".`);
-      for (const e of hits) await sendToUser(user, emailCard(e), emailButtons(e, db.teamMembers(user.id).length > 0));
+      const hasTeam = (await db.teamMembers(user.id)).length > 0;
+      for (const e of hits) await sendToUser(user, emailCard(e), emailButtons(e, hasTeam));
       return;
     }
     case "/mute": {
       if ((rest[0] || "").toLowerCase() === "off") {
-        db.setMuteHours(user.id, null, null);
+        await db.setMuteHours(user.id, null, null);
         return sendToUser(user, "🔔 Mute hours off — pushes anytime.");
       }
       const s = Number(rest[0]), e = Number(rest[1]);
       if (!Number.isInteger(s) || !Number.isInteger(e) || s < 0 || s > 23 || e < 0 || e > 23 || s === e) {
         return sendToUser(user, "Format: /mute <start hour> <end hour> (0–23), e.g. /mute 21 7 — or /mute off");
       }
-      db.setMuteHours(user.id, s, e);
+      await db.setMuteHours(user.id, s, e);
       return sendToUser(user, `🌙 Muted ${s}:00–${e}:00. Urgent mail queues and arrives as a "while you were away" batch when mute ends. Nothing gets left out.`);
     }
     case "/report":
@@ -292,26 +296,26 @@ export async function onText(user, text) {
     case "/team": {
       const sub = (rest[0] || "").toLowerCase();
       if (sub === "list") {
-        const m = db.teamMembers(user.id);
+        const m = await db.teamMembers(user.id);
         return sendToUser(user, m.length ? "Your team:\n" + m.map((x) => `• ${x.email}`).join("\n") : "No team members yet. /team add <their MAILER email>");
       }
       if (sub === "add" || sub === "remove") {
         const addr = (rest[1] || "").toLowerCase();
-        const target = db.userByEmail(addr);
+        const target = await db.userByEmail(addr);
         if (!target) return sendToUser(user, `No MAILER account for ${addr || "(missing email)"} — they need to sign up first.`);
         if (target.id === user.id) return sendToUser(user, "That's you.");
         if (sub === "add") {
-          db.teamAdd(user.id, target.id);
+          await db.teamAdd(user.id, target.id);
           await sendToUser(target, `👥 ${user.email} added you to their MAILER team — you'll now receive their inbox pushes and can claim emails.`);
           return sendToUser(user, `✅ ${addr} added. They'll receive your inbox pushes with a Claim button.`);
         }
-        db.teamRemove(user.id, target.id);
+        await db.teamRemove(user.id, target.id);
         return sendToUser(user, `Removed ${addr} from your team.`);
       }
       return sendToUser(user, "Usage: /team add <email> · /team remove <email> · /team list");
     }
     case "/open": {
-      const open = db.openEmailsFor(user.id).sort((a, b) => (a.priority === "high" ? -1 : 1) - (b.priority === "high" ? -1 : 1));
+      const open = (await db.openEmailsFor(user.id)).sort((a, b) => (a.priority === "high" ? -1 : 1) - (b.priority === "high" ? -1 : 1));
       if (!open.length) return sendToUser(user, "Inbox clear. Nothing open.");
       for (const e of open.slice(0, 10)) await sendToUser(user, emailCard(e), emailButtons(e));
       return;
@@ -332,24 +336,24 @@ export async function onAction(user, action) {
 
     // nudge approval: fresh follow-up email, not a threaded reply
     if (convo.nudge) {
-      const owner = db.userById(convo.nudge.userId);
+      const owner = await db.userById(convo.nudge.userId);
       if (!owner) return sendToUser(user, "Account not found.");
       try {
         await sendReplyFor(owner, { fromAddr: convo.nudge.counterparty, subject: convo.nudge.subject, messageId: null }, draft);
-        db.addAwaiting(owner.id, convo.nudge.counterparty, convo.nudge.subject); // keep watching for their answer
+        await db.addAwaiting(owner.id, convo.nudge.counterparty, convo.nudge.subject); // keep watching for their answer
         return sendToUser(user, `📤 Nudge sent to ${convo.nudge.counterparty}.`);
       } catch (err) {
         return sendToUser(user, "Send failed: " + err.message);
       }
     }
 
-    const email = db.emailById(convo.emailId);
+    const email = await db.emailById(convo.emailId);
     if (!email) return sendToUser(user, "That email is gone.");
-    const owner = db.userById(email.userId); // replies always go out from the inbox owner's address
+    const owner = await db.userById(email.userId); // replies always go out from the inbox owner's address
     try {
       await sendReplyFor(owner, email, draft);
-      db.updateEmail(email.id, { sentReply: draft, status: "done" });
-      db.addAwaiting(owner.id, email.fromAddr || email.from, email.subject); // silence catcher starts watching
+      await db.updateEmail(email.id, { sentReply: draft, status: "done" });
+      await db.addAwaiting(owner.id, email.fromAddr || email.from, email.subject); // silence catcher starts watching
       return sendToUser(user, `📤 Sent to ${email.fromAddr || email.from} and marked done.`);
     } catch (err) {
       return sendToUser(user, "Send failed: " + err.message);
@@ -364,10 +368,10 @@ export async function onAction(user, action) {
 
   /* ----- silence-catcher nudge buttons (id = awaiting id) ----- */
   if (code === "ng" || code === "nd") {
-    const a = db.awaitingById(Number(id));
+    const a = await db.awaitingById(Number(id));
     if (!a) return sendToUser(user, "That reminder is gone.");
     if (code === "nd") {
-      db.dismissAwaiting(a.id);
+      await db.dismissAwaiting(a.id);
       return sendToUser(user, "Dismissed — I'll stop watching that thread.");
     }
     await sendToUser(user, "✍️ Drafting a follow-up nudge…");
@@ -375,7 +379,7 @@ export async function onAction(user, action) {
       const pseudo = { from: a.counterparty, fromAddr: a.counterparty, subject: a.subject, body: "(No reply has been received to the owner's last message on this thread.)" };
       const draft = await draftReply(pseudo, "Write a brief, warm but professional follow-up nudge checking in on my previous email, making it easy for them to respond.");
       convos.set(user.id, { mode: "awaiting_approval", draft, nudge: { userId: a.user_id, counterparty: a.counterparty, subject: a.subject } });
-      db.dismissAwaiting(a.id);
+      await db.dismissAwaiting(a.id);
       return sendToUser(user, `Nudge to ${a.counterparty}:\n\n${draft}`, [
         { label: "✅ Approve & send", action: "approve" },
         { label: "🗑 Discard", action: "discard" },
@@ -385,33 +389,33 @@ export async function onAction(user, action) {
     }
   }
 
-  const email = db.emailById(id);
-  const canAccess = email && (email.userId === user.id || db.isTeamMember(email.userId, user.id));
+  const email = await db.emailById(id);
+  const canAccess = email && (email.userId === user.id || await db.isTeamMember(email.userId, user.id));
   if (!canAccess) return sendToUser(user, "That email is gone.");
-  const owner = db.userById(email.userId);
+  const owner = await db.userById(email.userId);
 
   switch (code) {
     case "cl": {
-      const existing = db.claimedBy(email.id);
+      const existing = await db.claimedBy(email.id);
       if (existing && existing !== user.id) {
-        const who = db.userById(existing);
+        const who = await db.userById(existing);
         return sendToUser(user, `Already claimed by ${who?.email || "a teammate"}.`);
       }
-      db.setClaimedBy(email.id, user.id);
+      await db.setClaimedBy(email.id, user.id);
       const note = `🙋 ${user.email} claimed: "${email.subject}"`;
-      for (const r of recipientsFor(owner)) if (r.id !== user.id) await sendToUser(r, note);
+      for (const r of await recipientsFor(owner)) if (r.id !== user.id) await sendToUser(r, note);
       return sendToUser(user, `✅ Yours: "${email.subject}". Draft a reply when ready.`);
     }
     case "d":
       convos.set(user.id, { mode: "awaiting_instruction", emailId: id });
       return sendToUser(user, `Tell me the reply you want for "${email.subject}".\ne.g. "Polite but firm — payment by Friday".`);
     case "t": {
-      const templates = db.templatesFor(owner.id); // team members use the owner's templates
+      const templates = await db.templatesFor(owner.id); // team members use the owner's templates
       if (!templates.length) return sendToUser(user, "No templates yet — /addtemplate or add one on the dashboard.");
       return sendToUser(user, `Pick a template for "${email.subject}":`, templates.map((t) => ({ label: t.name, action: `tf:${id}:${t.id}` })));
     }
     case "tf": {
-      const tpl = db.templateById(owner.id, Number(extra));
+      const tpl = await db.templateById(owner.id, Number(extra));
       if (!tpl) return sendToUser(user, "Template not found.");
       await sendToUser(user, `📋 Filling "${tpl.name}"…`);
       try {
@@ -426,7 +430,7 @@ export async function onAction(user, action) {
       }
     }
     case "ok":
-      db.updateEmail(id, { status: "done" });
+      await db.updateEmail(id, { status: "done" });
       return sendToUser(user, `✅ Done: "${email.subject}"`);
     case "s1":
     case "st":
@@ -440,7 +444,7 @@ export async function onAction(user, action) {
         d.setHours(9, 0, 0, 0);
         until = d.getTime();
       }
-      db.updateEmail(id, { snoozedUntil: until });
+      await db.updateEmail(id, { snoozedUntil: until });
       return sendToUser(user, `⏰ Snoozed "${email.subject}" — I'll bring it back. Nothing gets left out.`);
     }
     default:

@@ -57,7 +57,7 @@ async function pollAll() {
   if (polling) return;
   polling = true;
   try {
-    for (const user of db.usersWithInbox()) {
+    for (const user of await db.usersWithInbox()) {
       const fresh = await fetchNewEmailsFor(user);
       for (const email of fresh) {
         console.log(`[user ${user.id}] New email: ${email.from} — ${email.subject}`);
@@ -88,7 +88,7 @@ setInterval(() => checkSilence().catch(() => {}), 60 * 60 * 1000);
 setInterval(async () => {
   const now = new Date();
   if (now.getDay() !== 0 || now.getHours() !== config.digestHour || now.getMinutes() !== 30) return;
-  for (const user of db.usersWithInbox()) {
+  for (const user of await db.usersWithInbox()) {
     if (user.telegram_chat_id || user.whatsapp_number) await sendWeeklyReport(user);
   }
 }, 60 * 1000);
@@ -98,10 +98,10 @@ setInterval(async () => {
   const now = new Date();
   if (now.getHours() !== config.digestHour) return;
   const day = now.toISOString().slice(0, 10);
-  for (const user of db.usersWithInbox()) {
+  for (const user of await db.usersWithInbox()) {
     if (user.last_digest_day === day) continue;
     if (!user.telegram_chat_id && !user.whatsapp_number) continue;
-    db.setDigestDay(user.id, day);
-    await sendRoundupFor(db.userById(user.id));
+    await db.setDigestDay(user.id, day);
+    await sendRoundupFor(await db.userById(user.id));
   }
 }, 60 * 1000);

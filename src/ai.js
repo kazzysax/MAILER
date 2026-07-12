@@ -43,23 +43,41 @@ function parseJSONSafe(t) {
 
 export async function analyzeEmail(email, categories = []) {
   const sys =
-    "You are MAILER, an inbox assistant for busy business owners. Concise, decision-ready. Respond ONLY with valid JSON, no fences, no preamble.";
+    "You are MAILER, an inbox assistant for busy business owners. Your summaries must be concise but complete — never drop a date, amount, deadline, order/invoice number, or named commitment. Respond ONLY with valid JSON, no fences, no preamble.";
   const catList = categories.length ? categories.join(", ") : "Other";
   const user = `Analyze this email. Return JSON exactly:
-{"summary":"one or two short sentences: who wants what, any money or deadline at stake","action":"the single concrete action requested of the reader with any deadline, or null","category":"pick exactly one from this list: ${catList}"}
+{"summary":"2-4 short sentences covering who wants what and why — every date, amount, deadline, and reference number mentioned in the email must appear here, none omitted","action":"the single concrete action requested of the reader with its deadline, or null","highlights":["short standalone facts worth calling out, e.g. 'Due Fri 18 Jul' or '$4,000 owed' or 'Invoice #2214' — empty array if the email has none"],"category":"pick exactly one from this list: ${catList}"}
 
 FROM: ${email.from}
 SUBJECT: ${email.subject}
 ATTACHMENTS: ${(email.attachments || []).join(", ") || "none"}
 BODY:
 ${(email.body || "").slice(0, 6000)}`;
-  const raw = await callClaude(sys, user, 400);
+  const raw = await callClaude(sys, user, 500);
   const p = parseJSONSafe(raw);
   return {
     summary: p?.summary || raw.slice(0, 240),
     action: p?.action || null,
+    highlights: Array.isArray(p?.highlights) ? p.highlights.filter((h) => typeof h === "string").slice(0, 6) : [],
     category: p?.category || null,
   };
+}
+
+export async function extractFields(email, fields) {
+  const sys =
+    "You extract structured data from business emails. Respond ONLY with valid JSON, no fences, no preamble. Only use information actually present in the email — never invent a value.";
+  const user = `Extract these fields from the email below. Return a JSON object with exactly these keys: ${JSON.stringify(fields)}.
+For each field, put the value found in the email as a short string. If a field isn't mentioned in the email, use an empty string "" for it.
+
+FROM: ${email.from}
+SUBJECT: ${email.subject}
+BODY:
+${(email.body || "").slice(0, 6000)}`;
+  const raw = await callClaude(sys, user, 500);
+  const p = parseJSONSafe(raw) || {};
+  const out = {};
+  for (const f of fields) out[f] = typeof p[f] === "string" ? p[f] : "";
+  return out;
 }
 
 export async function draftReply(email, instruction) {
@@ -94,7 +112,7 @@ export async function dailyRoundup(openEmails) {
   const listing = openEmails
     .map(
       (e, i) =>
-        `${i + 1}. [${(e.priority || "normal").toUpperCase()}] From: ${e.from} | Subject: ${e.subject} | Summary: ${e.summary || (e.body || "").slice(0, 160)} | Action: ${e.action || "—"} | Attachments: ${(e.attachments || []).join(", ") || "none"}`
+        `${i + 1}. [${(e.priority || "normal").toUpperCase()}] From: ${e.from} | Subject: ${e.subject} | Summary: ${e.summary || (e.body || "").slice(0, 160)} | Key facts: ${(e.highlights || []).join(", ") || "none"} | Action: ${e.action || "—"} | Attachments: ${(e.attachments || []).join(", ") || "none"}`
     )
     .join("\n");
   const sys =

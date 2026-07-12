@@ -87,6 +87,11 @@ textarea:focus,.mini-row input:focus,.mini-row select:focus,.tname:focus{outline
 .search{margin-left:auto;display:flex;align-items:center;gap:8px;background:var(--ink-2);border:1px solid var(--line);border-radius:8px;padding:7px 12px;min-width:210px;transition:border-color .2s}
 .search:focus-within{border-color:rgba(255,107,44,.4)}
 .search input{background:none;border:none;color:var(--paper);font-size:13px;width:100%;outline:none;font-family:'Satoshi'}
+.refresh-btn{background:var(--ink-2);border:1px solid var(--line);color:var(--paper);border-radius:8px;width:36px;height:36px;display:grid;place-items:center;font-size:15px;flex-shrink:0;transition:border-color .2s}
+.refresh-btn:hover:not(:disabled){border-color:var(--line-2)}
+.refresh-btn:disabled{opacity:.5;cursor:not-allowed}
+.refresh-btn.spin span{display:inline-block;animation:spin .8s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
 .tabs{display:flex;gap:4px;background:var(--ink-2);border:1px solid var(--line);border-radius:10px;padding:4px;margin-bottom:20px;position:relative}
 .tab{flex:1;position:relative;z-index:2;display:flex;align-items:center;justify-content:center;gap:8px;padding:10px 14px;border:none;background:none;color:var(--muted);font-size:13.5px;font-weight:700;border-radius:7px}
 .tab .count{font-family:'JetBrains Mono';font-size:10.5px;background:var(--ink);border:1px solid var(--line);padding:1px 7px;border-radius:20px;color:var(--muted)}
@@ -126,6 +131,8 @@ textarea:focus,.mini-row input:focus,.mini-row select:focus,.tname:focus{outline
 .bfield .v{color:var(--paper);flex:1}
 .action-line{background:var(--ink);border:1px solid var(--amber-soft);border-radius:7px;padding:9px 12px;font-size:12.5px;color:var(--amber);margin:11px 0}
 .risk-line{background:var(--red-soft);border:1px solid var(--red);border-radius:7px;padding:9px 12px;font-size:12px;color:var(--red);margin:11px 0}
+.highlights-row{display:flex;flex-wrap:wrap;gap:6px;margin:11px 0}
+.hl-pill{background:var(--teal-soft);color:var(--teal);border:1px solid rgba(57,178,125,.35);border-radius:20px;padding:3px 10px;font-size:11.5px;font-weight:600;white-space:nowrap}
 .empty{padding:40px 20px;text-align:center;color:var(--muted);font-size:14px;background:var(--ink-2);border:1px dashed var(--line);border-radius:10px;line-height:1.55}
 .tier-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:13px}
 @media(max-width:820px){.tier-grid{grid-template-columns:1fr}}
@@ -143,6 +150,24 @@ textarea:focus,.mini-row input:focus,.mini-row select:focus,.tname:focus{outline
 .tcard .tc-date{font-family:'JetBrains Mono';font-size:10px;color:var(--muted-2)}
 .tcard .tc-sum{font-size:12px;color:var(--muted);line-height:1.4}
 .hidden{display:none}
+.modal-backdrop{position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:100;display:flex;align-items:center;justify-content:center;padding:20px}
+.modal-box{background:var(--ink-2);border:1px solid var(--line-2);border-radius:12px;max-width:900px;width:100%;max-height:80vh;overflow:auto;padding:20px;box-shadow:0 30px 60px -20px rgba(0,0,0,.85)}
+.modal-head{display:flex;align-items:center;gap:10px;margin-bottom:14px}
+.modal-head h3{font-size:16px;font-weight:800}
+.modal-head .x{margin-left:auto;background:none;border:none;color:var(--muted-2);font-size:20px;cursor:pointer}
+.modal-head .x:hover{color:var(--paper)}
+.dbtable{width:100%;border-collapse:collapse;font-size:12.5px}
+.dbtable th,.dbtable td{padding:8px 10px;border-bottom:1px solid var(--line);text-align:left;max-width:220px;overflow:hidden;text-overflow:ellipsis}
+.dbtable th{color:var(--muted-2);font-family:'JetBrains Mono';font-size:10.5px;text-transform:uppercase;letter-spacing:.04em;white-space:nowrap}
+.dbtable td.del{width:1%}
+.dbtable td.del button{background:none;border:none;color:var(--muted-2);cursor:pointer;font-size:14px}
+.dbtable td.del button:hover{color:var(--red)}
+.db-portal{display:flex;gap:8px;margin:11px 0;align-items:center;flex-wrap:wrap}
+.db-portal select{flex:1;min-width:140px;background:var(--ink);border:1px solid var(--line);color:var(--paper);border-radius:7px;padding:7px 9px;font-size:12px;font-family:'Satoshi'}
+.db-portal button{background:var(--ink-3);border:1px solid var(--line);color:var(--paper);border-radius:7px;padding:7px 12px;font-size:12px;font-weight:600;white-space:nowrap}
+.db-portal button:hover:not(:disabled){border-color:var(--amber)}
+.db-portal button:disabled{opacity:.5;cursor:not-allowed}
+.db-portal .hint{font-size:11.5px;color:var(--muted-2)}
 </style>
 </head>
 <body>
@@ -200,6 +225,15 @@ textarea:focus,.mini-row input:focus,.mini-row select:focus,.tname:focus{outline
       </div></div>
     </div>
     <div class="bar">
+      <div class="bar-head" onclick="this.parentElement.classList.toggle('open')"><span class="bic">🗃️</span><h4>Database</h4><span class="cnt" id="dbCount">0</span><span class="chev-b">▾</span></div>
+      <div class="bar-body"><div class="bar-body-inner">
+        <input id="dbName" class="tname" placeholder="Folder name, e.g. Invoices">
+        <input id="dbFields" class="tname" placeholder="Fields, comma separated — Sender, Amount, Due date">
+        <button class="btn-sm" type="button" onclick="createDbTable()">Create folder</button>
+        <div id="dbList" style="margin-top:10px"></div>
+      </div></div>
+    </div>
+    <div class="bar">
       <div class="bar-head" onclick="this.parentElement.classList.toggle('open')"><span class="bic">📄</span><h4>Templates</h4><span class="cnt" id="tmCount">0</span><span class="chev-b">▾</span></div>
       <div class="bar-body"><div class="bar-body-inner">
         <input id="tName" class="tname mono" placeholder="Template name">
@@ -218,6 +252,7 @@ textarea:focus,.mini-row input:focus,.mini-row select:focus,.tname:focus{outline
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="m21 21-4-4"/></svg>
         <input id="search" placeholder="Search email…" oninput="renderEmails()">
       </div>
+      <button class="refresh-btn" id="refreshBtn" type="button" onclick="refreshInbox()" title="Check inbox now"><span id="refreshIcon">🔄</span></button>
     </div>
 
     <div class="tabs" id="tabs">
@@ -235,10 +270,21 @@ textarea:focus,.mini-row input:focus,.mini-row select:focus,.tname:focus{outline
   </div>
 </div>
 
+<div class="modal-backdrop hidden" id="dbModal" onclick="if(event.target===this) closeDbModal()">
+  <div class="modal-box">
+    <div class="modal-head">
+      <h3 id="dbModalTitle">Folder</h3>
+      <button class="x" type="button" onclick="closeDbModal()">×</button>
+    </div>
+    <div id="dbModalBody"></div>
+  </div>
+</div>
+
 <script>
 const $ = (id) => document.getElementById(id);
 let emails = [];
 let categories = [];
+let dbTables = [];
 let me = null;
 
 async function api(path, opts = {}) {
@@ -307,7 +353,7 @@ async function boot() {
   $('conn-tg').className = 'conn ' + (me.telegramLinked ? 'on' : 'off');
   $('conn-wa').className = 'conn ' + (me.whatsappNumber ? 'on' : 'off');
 
-  await Promise.all([loadRules(), loadTemplates(), loadCategories(), loadEmails()]);
+  await Promise.all([loadRules(), loadTemplates(), loadCategories(), loadDbTables(), loadEmails()]);
 }
 
 async function loadRules() {
@@ -401,9 +447,121 @@ async function addCategoryUI() {
   } catch (e) { alert(e.message); }
 }
 
+/* ---------- custom database folders ---------- */
+async function loadDbTables() {
+  dbTables = await api('/dbtables');
+  const list = $('dbList');
+  list.innerHTML = '';
+  $('dbCount').textContent = dbTables.length;
+  if (!dbTables.length) {
+    list.innerHTML = '<div class="mini-note" style="font-size:11.5px;color:var(--muted-2)">No folders yet — name one above and list the fields to store.</div>';
+  }
+  for (const t of dbTables) {
+    const row = document.createElement('div');
+    row.className = 'tmpl';
+    row.style.cursor = 'pointer';
+    row.innerHTML = `🗃️ ${escapeHtml(t.name)} <span class="mono" style="color:var(--muted-2);font-size:10.5px">(${t.rowCount})</span>`;
+    row.onclick = () => openDbTable(t.id);
+    const del = document.createElement('button');
+    del.className = 'x'; del.type = 'button'; del.textContent = '×';
+    del.onclick = async (ev) => {
+      ev.stopPropagation();
+      await api('/dbtables/' + t.id, { method: 'DELETE' });
+      loadDbTables();
+    };
+    row.appendChild(del);
+    list.appendChild(row);
+  }
+  renderEmails();
+}
+
+async function createDbTable() {
+  const name = $('dbName').value.trim();
+  const fields = $('dbFields').value.split(',').map(f => f.trim()).filter(Boolean);
+  if (!name) { alert('Give the folder a name.'); return; }
+  if (!fields.length) { alert('List at least one field to store, e.g. Sender, Amount, Due date.'); return; }
+  try {
+    await api('/dbtables', { method: 'POST', body: { name, fields } });
+    $('dbName').value = '';
+    $('dbFields').value = '';
+    loadDbTables();
+  } catch (e) { alert(e.message); }
+}
+
+async function openDbTable(id) {
+  try {
+    const { table, rows } = await api('/dbtables/' + id + '/rows');
+    $('dbModalTitle').textContent = table.name;
+    const cols = table.fields;
+    let html = `<div style="overflow-x:auto"><table class="dbtable"><thead><tr>${cols.map(c => `<th>${escapeHtml(c)}</th>`).join('')}<th>Added</th><th></th></tr></thead><tbody>`;
+    if (!rows.length) {
+      html += `<tr><td colspan="${cols.length + 2}" class="empty" style="border:none">No rows yet — open an email and use "Add to database" to fill this in.</td></tr>`;
+    } else {
+      for (const r of rows) {
+        const d = new Date(r.createdAt);
+        html += '<tr>' + cols.map(c => `<td>${escapeHtml(r.values[c] || '—')}</td>`).join('') +
+          `<td class="mono" style="color:var(--muted-2)">${d.toLocaleDateString()}</td>` +
+          `<td class="del"><button type="button" onclick="deleteDbRow(${id},${r.id})">×</button></td></tr>`;
+      }
+    }
+    html += '</tbody></table></div>';
+    $('dbModalBody').innerHTML = html;
+    $('dbModal').classList.remove('hidden');
+  } catch (e) { alert(e.message); }
+}
+
+async function deleteDbRow(tableId, rowId) {
+  await api('/dbtables/' + tableId + '/rows/' + rowId, { method: 'DELETE' });
+  openDbTable(tableId);
+  loadDbTables();
+}
+
+function closeDbModal() {
+  $('dbModal').classList.add('hidden');
+}
+
+async function extractToDb(emailId, btn) {
+  const select = btn.previousElementSibling;
+  const tableId = select.value;
+  if (!tableId) return;
+  btn.disabled = true;
+  const original = btn.textContent;
+  btn.textContent = 'Extracting…';
+  try {
+    await api('/emails/' + emailId + '/extract', { method: 'POST', body: { tableId: Number(tableId) } });
+    btn.textContent = '✓ Added';
+    loadDbTables();
+    setTimeout(() => { btn.textContent = original; btn.disabled = false; }, 1800);
+  } catch (e) {
+    alert(e.message);
+    btn.textContent = original;
+    btn.disabled = false;
+  }
+}
+
 async function loadEmails() {
   emails = await api('/emails');
   renderEmails();
+}
+
+async function refreshInbox() {
+  const btn = $('refreshBtn');
+  btn.disabled = true;
+  btn.classList.add('spin');
+  try {
+    const r = await api('/emails/refresh', { method: 'POST' });
+    await loadEmails();
+    if (r.new) {
+      const meta = $('viewMeta');
+      const restore = meta.textContent;
+      meta.textContent = `✓ ${r.new} new email${r.new === 1 ? '' : 's'}`;
+      setTimeout(() => { meta.textContent = restore; }, 2500);
+    }
+  } catch (e) {
+    alert(e.message);
+  }
+  btn.disabled = false;
+  btn.classList.remove('spin');
 }
 
 function filteredEmails() {
@@ -433,6 +591,15 @@ function renderEmails() {
         ? `<div class="risk-line">⚠️ Possible scam · risk ${Math.round(Number(risk) * (Number(risk) <= 1 ? 100 : 1))}%${e.scamReasons || e.scam_reasons ? ' — ' + escapeHtml(e.scamReasons || e.scam_reasons) : ''}</div>`
         : '';
       const action = e.action ? `<div class="action-line">➡️ ${escapeHtml(e.action)}</div>` : '';
+      const highlights = e.highlights?.length
+        ? `<div class="highlights-row">${e.highlights.map(h => `<span class="hl-pill">📌 ${escapeHtml(h)}</span>`).join('')}</div>`
+        : '';
+      const dbPortal = dbTables.length
+        ? `<div class="db-portal" onclick="event.stopPropagation()">
+             <select>${dbTables.map(t => `<option value="${t.id}">${escapeHtml(t.name)}</option>`).join('')}</select>
+             <button type="button" onclick="extractToDb('${e.id}', this)">＋ Add to database</button>
+           </div>`
+        : `<div class="db-portal hint" onclick="event.stopPropagation()">Create a database folder in the sidebar to save this email's data.</div>`;
       return `<div class="mailrow ${pri}${risk ? ' risk' : ''}" onclick="toggle(this)">
         <div class="mail-head">
           <div class="stamp"><span class="mo">${mo}</span><span class="da">${da}</span></div>
@@ -446,7 +613,7 @@ function renderEmails() {
           <div class="bfield"><span class="k">From</span><span class="v mono">${escapeHtml(e.from || '')}</span></div>
           <div class="bfield"><span class="k">Subject</span><span class="v">${escapeHtml(e.subject || '')}</span></div>
           <div class="bfield"><span class="k">Summary</span><span class="v">${escapeHtml(e.summary || '—')}</span></div>
-          ${action}${riskHtml}
+          ${highlights}${action}${riskHtml}${dbPortal}
         </div></div>
       </div>`;
     }).join('');

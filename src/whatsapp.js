@@ -71,7 +71,7 @@ export function initWhatsApp(app) {
 
     // voice notes: transcribe -> treat the transcript as the user's message
     if (numMedia > 0 && (req.body.MediaContentType0 || "").startsWith("audio")) {
-      const user = db.userByWhatsApp(from);
+      const user = await db.userByWhatsApp(from);
       if (!user) return twilioSend(from, `Sign up at ${config.baseUrl} first, then link this number.`);
       const { voiceEnabled, transcribeVoiceNote } = await import("./voice.js");
       if (!voiceEnabled()) {
@@ -97,16 +97,16 @@ export function initWhatsApp(app) {
     // magic-link binding: "start CODE" (or "link CODE") from any number
     const m = text.match(/^(?:start|link)\s+(\S+)/i);
     if (m) {
-      const userId = db.consumeLinkCode(m[1]);
+      const userId = await db.consumeLinkCode(m[1]);
       if (userId) {
-        db.setWhatsApp(userId, from);
-        const user = db.userById(userId);
+        await db.setWhatsApp(userId, from);
+        const user = await db.userById(userId);
         return onText(user, "/start");
       }
       return twilioSend(from, `That link expired. Get a fresh one from your MAILER dashboard → Connect WhatsApp.`);
     }
 
-    const user = db.userByWhatsApp(from);
+    const user = await db.userByWhatsApp(from);
     if (!user) {
       return twilioSend(from, `This number isn't linked to an MAILER account yet.\n\nSign up at ${config.baseUrl} and tap "Connect WhatsApp" — it opens this chat with your personal link ready to send.`);
     }

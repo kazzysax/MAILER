@@ -3,7 +3,9 @@ import { OAuth2Client } from "google-auth-library";
 import { config } from "./config.js";
 import * as db from "./db.js";
 import { hashPassword, verifyPassword, signSession, verifySession, encrypt, randomCode } from "./crypto.js";
-import { testImap } from "./mailer.js";
+import { testImap, fetchNewEmailsFor } from "./mailer.js";
+import { processIncoming } from "./engine.js";
+import { extractFields } from "./ai.js";
 
 const googleClient = config.googleClientId ? new OAuth2Client(config.googleClientId) : null;
 
@@ -12,10 +14,10 @@ export function apiRouter() {
   r.use(express.json());
 
   /* ---------- auth middleware ---------- */
-  function auth(req, res, next) {
+  async function auth(req, res, next) {
     const userId = verifySession(req.cookies?.xm);
     if (!userId) return res.status(401).json({ error: "Not signed in" });
-    const user = db.userById(userId);
+    const user = await db.userById(userId);
     if (!user) return res.status(401).json({ error: "Not signed in" });
     req.user = user;
     next();
@@ -27,22 +29,22 @@ export function apiRouter() {
   });
 
   /* ---------- auth ---------- */
-  r.post("/signup", (req, res) => {
+  r.post("/signup", async (req, res) => {
     const { email, password } = req.body || {};
     if (!email || !password || password.length < 8) {
       return res.status(400).json({ error: "Email and a password of 8+ characters required." });
     }
-    if (db.userByEmail(email.toLowerCase())) return res.status(400).json({ error: "Account already exists — log in." });
-    const info = db.createUser(email.toLowerCase(), hashPassword(password));
+    if (await db.userByEmail(email.toLowerCase())) return res.status(400).json({ error: "Account already exists — log in." });
+    const info = await db.createUser(email.toLowerCase(), hashPassword(password));
     const userId = Number(info.lastInsertRowid);
-    db.seedDefaultCategories(userId);
+    await db.seedDefaultCategories(userId);
     res.cookie("xm", signSession(userId), { httpOnly: true, sameSite: "lax", maxAge: 30 * 24 * 3600 * 1000 });
     res.json({ ok: true });
   });
 
-  r.post("/login", (req, res) => {
+  r.post("/login", async (req, res) => {
     const { email, password } = req.body || {};
-    const user = db.userByEmail((email || "").toLowerCase());
+    const user = await db.userByEmail((email || "").toLowerCase());
     if (!user || !verifyPassword(password || "", user.pass_hash)) {
       return res.status(401).json({ error: "Wrong email or password." });
     }
@@ -65,16 +67,16 @@ export function apiRouter() {
       return res.status(401).json({ error: "Your Google account has no verified email." });
     }
     const email = payload.email.toLowerCase();
-    let user = db.userByGoogleId(payload.sub);
+    let user = await db.userByGoogleId(payload.sub);
     if (!user) {
-      user = db.userByEmail(email);
+      user = await db.userByEmail(email);
       if (user) {
-        db.linkGoogleId(user.id, payload.sub);
+        await db.linkGoogleId(user.id, payload.sub);
       } else {
-        const info = db.createGoogleUser(email, hashPassword(randomCode(32)), payload.sub);
+        const info = await db.createGoogleUser(email, hashPassword(randomCode(32)), payload.sub);
         const userId = Number(info.lastInsertRowid);
-        db.seedDefaultCategories(userId);
-        user = db.userById(userId);
+        await db.seedDefaultCategories(userId);
+        user = await db.userById(userId);
       }
     }
     res.cookie("xm", signSession(user.id), { httpOnly: true, sameSite: "lax", maxAge: 30 * 24 * 3600 * 1000 });
@@ -117,113 +119,171 @@ export function apiRouter() {
     } catch (e) {
       return res.status(400).json({ error: "Could not connect to that inbox: " + e.message + " (Gmail: use an App Password, not your normal password.)" });
     }
-    db.setInbox(req.user.id, mailUser, encrypt(mailPass), ih, ip, sh, sp);
+    await db.setInbox(req.user.id, mailUser, encrypt(mailPass), ih, ip, sh, sp);
     res.json({ ok: true });
   });
 
-  r.delete("/inbox", auth, (req, res) => {
-    db.disconnectInbox(req.user.id);
+  r.delete("/inbox", auth, async (req, res) => {
+    await db.disconnectInbox(req.user.id);
     res.json({ ok: true });
   });
 
   /* ---------- rules ---------- */
-  r.get("/rules", auth, (req, res) => res.json(db.rulesFor(req.user.id)));
-  r.post("/rules", auth, (req, res) => {
+  r.get("/rules", auth, async (req, res) => res.json(await db.rulesFor(req.user.id)));
+  r.post("/rules", auth, async (req, res) => {
     const { type, value, level } = req.body || {};
     if (!["sender", "domain", "keyword"].includes(type) || !["high", "low"].includes(level) || !value?.trim()) {
       return res.status(400).json({ error: "Invalid rule." });
     }
-    db.addRule(req.user.id, type, value.trim(), level);
+    await db.addRule(req.user.id, type, value.trim(), level);
     res.json({ ok: true });
   });
-  r.delete("/rules/:id", auth, (req, res) => {
-    db.delRule(req.user.id, Number(req.params.id));
+  r.delete("/rules/:id", auth, async (req, res) => {
+    await db.delRule(req.user.id, Number(req.params.id));
     res.json({ ok: true });
   });
 
   /* ---------- templates ---------- */
-  r.get("/templates", auth, (req, res) => res.json(db.templatesFor(req.user.id)));
-  r.post("/templates", auth, (req, res) => {
+  r.get("/templates", auth, async (req, res) => res.json(await db.templatesFor(req.user.id)));
+  r.post("/templates", auth, async (req, res) => {
     const { name, content } = req.body || {};
     if (!name?.trim() || !content?.trim()) return res.status(400).json({ error: "Name and content required." });
-    db.addTemplate(req.user.id, name.trim().slice(0, 60), content.trim());
+    await db.addTemplate(req.user.id, name.trim().slice(0, 60), content.trim());
     res.json({ ok: true });
   });
-  r.delete("/templates/:id", auth, (req, res) => {
-    db.delTemplate(req.user.id, Number(req.params.id));
+  r.delete("/templates/:id", auth, async (req, res) => {
+    await db.delTemplate(req.user.id, Number(req.params.id));
     res.json({ ok: true });
   });
 
   /* ---------- categories (customizable, seeded with defaults) ---------- */
-  r.get("/categories", auth, (req, res) => {
-    let cats = db.categoriesFor(req.user.id);
+  r.get("/categories", auth, async (req, res) => {
+    let cats = await db.categoriesFor(req.user.id);
     if (!cats.length) {
-      db.seedDefaultCategories(req.user.id);
-      cats = db.categoriesFor(req.user.id);
+      await db.seedDefaultCategories(req.user.id);
+      cats = await db.categoriesFor(req.user.id);
     }
     res.json(cats);
   });
-  r.post("/categories", auth, (req, res) => {
+  r.post("/categories", auth, async (req, res) => {
     const name = (req.body?.name || "").trim().slice(0, 30);
     if (!name) return res.status(400).json({ error: "Category name required." });
-    const existing = db.categoriesFor(req.user.id);
+    const existing = await db.categoriesFor(req.user.id);
     if (existing.some((c) => c.name.toLowerCase() === name.toLowerCase())) {
       return res.status(400).json({ error: "That category already exists." });
     }
-    db.addCategory(req.user.id, name);
+    await db.addCategory(req.user.id, name);
     res.json({ ok: true });
   });
-  r.delete("/categories/:id", auth, (req, res) => {
-    const existing = db.categoriesFor(req.user.id);
+  r.delete("/categories/:id", auth, async (req, res) => {
+    const existing = await db.categoriesFor(req.user.id);
     if (existing.length <= 1) return res.status(400).json({ error: "Keep at least one category." });
-    db.delCategory(req.user.id, Number(req.params.id));
+    await db.delCategory(req.user.id, Number(req.params.id));
     res.json({ ok: true });
   });
 
+  /* ---------- custom data tables (merchant-defined extraction folders) ---------- */
+  r.get("/dbtables", auth, async (req, res) => {
+    const tables = await db.dataTablesFor(req.user.id);
+    const withCounts = await Promise.all(tables.map(async (t) => ({ ...t, rowCount: (await db.rowsForTable(req.user.id, t.id)).length })));
+    res.json(withCounts);
+  });
+  r.post("/dbtables", auth, async (req, res) => {
+    const name = (req.body?.name || "").trim().slice(0, 40);
+    const fields = Array.isArray(req.body?.fields)
+      ? [...new Set(req.body.fields.map((f) => String(f || "").trim().slice(0, 40)).filter(Boolean))].slice(0, 12)
+      : [];
+    if (!name) return res.status(400).json({ error: "Folder name required." });
+    if (!fields.length) return res.status(400).json({ error: "Add at least one field to store." });
+    await db.createDataTable(req.user.id, name, fields);
+    res.json({ ok: true });
+  });
+  r.delete("/dbtables/:id", auth, async (req, res) => {
+    await db.delDataTable(req.user.id, Number(req.params.id));
+    res.json({ ok: true });
+  });
+
+  r.get("/dbtables/:id/rows", auth, async (req, res) => {
+    const table = await db.dataTableById(req.user.id, Number(req.params.id));
+    if (!table) return res.status(404).json({ error: "Folder not found." });
+    res.json({ table, rows: await db.rowsForTable(req.user.id, table.id) });
+  });
+  r.delete("/dbtables/:id/rows/:rowId", auth, async (req, res) => {
+    await db.delDataRow(req.user.id, Number(req.params.rowId));
+    res.json({ ok: true });
+  });
+
+  /* ---------- the per-email "add to database" portal ---------- */
+  r.post("/emails/:id/extract", auth, async (req, res) => {
+    const email = await db.emailById(req.params.id);
+    if (!email || email.userId !== req.user.id) return res.status(404).json({ error: "Email not found." });
+    const table = await db.dataTableById(req.user.id, Number(req.body?.tableId));
+    if (!table) return res.status(404).json({ error: "Database folder not found." });
+    try {
+      const values = await extractFields(email, table.fields);
+      await db.addDataRow(req.user.id, table.id, email.id, values);
+      res.json({ ok: true, values });
+    } catch (e) {
+      res.status(500).json({ error: "Extraction failed: " + e.message });
+    }
+  });
+
   /* ---------- connect Telegram: magic link ---------- */
-  r.post("/link/telegram", auth, (req, res) => {
+  r.post("/link/telegram", auth, async (req, res) => {
     const code = randomCode(12);
-    db.createLinkCode(code, req.user.id);
+    await db.createLinkCode(code, req.user.id);
     res.json({ link: `https://t.me/${config.telegramBotUsername}?start=${code}` });
   });
 
   /* ---------- connect WhatsApp: magic link (primary flow) ---------- */
-  r.post("/link/whatsapp/start", auth, (req, res) => {
+  r.post("/link/whatsapp/start", auth, async (req, res) => {
     if (!config.twilio.enabled) return res.status(400).json({ error: "WhatsApp isn't enabled on this server yet." });
     const code = randomCode(12);
-    db.createLinkCode(code, req.user.id);
+    await db.createLinkCode(code, req.user.id);
     const digits = config.twilio.from.replace(/[^\d]/g, ""); // whatsapp:+1415... -> 1415...
     const link = `https://wa.me/${digits}?text=${encodeURIComponent("start " + code)}`;
     res.json({ link, number: "+" + digits });
   });
 
   /* ---------- connect WhatsApp: manual number entry (fallback) ---------- */
-  r.post("/link/whatsapp", auth, (req, res) => {
+  r.post("/link/whatsapp", auth, async (req, res) => {
     if (!config.twilio.enabled) return res.status(400).json({ error: "WhatsApp isn't enabled on this server yet." });
     let { number } = req.body || {};
     number = (number || "").replace(/[^+\d]/g, "");
     if (!/^\+\d{8,15}$/.test(number)) return res.status(400).json({ error: "Use international format, e.g. +2348012345678." });
-    db.setWhatsApp(req.user.id, `whatsapp:${number}`);
+    await db.setWhatsApp(req.user.id, `whatsapp:${number}`);
     res.json({ ok: true, sandboxFrom: config.twilio.from });
   });
 
   /* ---------- mute hours ---------- */
-  r.post("/settings/mute", auth, (req, res) => {
+  r.post("/settings/mute", auth, async (req, res) => {
     const { start, end } = req.body || {};
     if (start === null || end === null || start === "" || end === "") {
-      db.setMuteHours(req.user.id, null, null);
+      await db.setMuteHours(req.user.id, null, null);
       return res.json({ ok: true });
     }
     const s = Number(start), e = Number(end);
     if (!Number.isInteger(s) || !Number.isInteger(e) || s < 0 || s > 23 || e < 0 || e > 23 || s === e) {
       return res.status(400).json({ error: "Hours must be 0–23 and different." });
     }
-    db.setMuteHours(req.user.id, s, e);
+    await db.setMuteHours(req.user.id, s, e);
     res.json({ ok: true });
   });
 
   /* ---------- recent emails (dashboard view) ---------- */
-  r.get("/emails", auth, (req, res) => res.json(db.recentEmailsFor(req.user.id, 50)));
+  r.get("/emails", auth, async (req, res) => res.json(await db.recentEmailsFor(req.user.id, 50)));
+
+  /* ---------- force an immediate inbox check (dashboard refresh button) ---------- */
+  r.post("/emails/refresh", auth, async (req, res) => {
+    if (!req.user.mail_user) return res.status(400).json({ error: "Connect your inbox first." });
+    try {
+      const fresh = await fetchNewEmailsFor(req.user);
+      for (const email of fresh) await processIncoming(req.user, email);
+      res.json({ ok: true, new: fresh.length });
+    } catch (e) {
+      res.status(500).json({ error: "Could not check your inbox: " + e.message });
+    }
+  });
 
   return r;
 }
