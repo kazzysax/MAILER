@@ -88,13 +88,6 @@ CREATE TABLE IF NOT EXISTS team_members (
   member_id INTEGER NOT NULL,
   PRIMARY KEY (owner_id, member_id)
 );
-CREATE TABLE IF NOT EXISTS used_payments (
-  tx_hash TEXT PRIMARY KEY,
-  service TEXT,
-  amount REAL,
-  payer TEXT,
-  used_at BIGINT NOT NULL
-);
 CREATE TABLE IF NOT EXISTS categories (
   id SERIAL PRIMARY KEY,
   user_id INTEGER NOT NULL,
@@ -130,6 +123,16 @@ CREATE TABLE IF NOT EXISTS blacklist (
   created_at BIGINT NOT NULL,
   UNIQUE(user_id, address)
 );
+CREATE TABLE IF NOT EXISTS chain_logs (
+  id SERIAL PRIMARY KEY,
+  user_id INTEGER NOT NULL,
+  email_id TEXT,
+  event_type TEXT NOT NULL,
+  status TEXT NOT NULL DEFAULT 'pending_approval',
+  tx_hash TEXT,
+  created_at BIGINT NOT NULL,
+  updated_at BIGINT
+);
 CREATE INDEX IF NOT EXISTS idx_emails_user ON emails(user_id, status);
 CREATE INDEX IF NOT EXISTS idx_data_rows_table ON data_rows(table_id);
 `);
@@ -146,6 +149,12 @@ for (const sql of [
   "ALTER TABLE emails ADD COLUMN IF NOT EXISTS category TEXT",
   "ALTER TABLE emails ADD COLUMN IF NOT EXISTS highlights TEXT",
   "ALTER TABLE emails ADD COLUMN IF NOT EXISTS blocked BOOLEAN DEFAULT FALSE",
+  "ALTER TABLE users ADD COLUMN IF NOT EXISTS wallet_address TEXT",
+  "ALTER TABLE users ADD COLUMN IF NOT EXISTS chain_auto_sign BOOLEAN DEFAULT FALSE",
+  "ALTER TABLE users ADD COLUMN IF NOT EXISTS chain_auto_sign_sig TEXT",
+  "ALTER TABLE users ADD COLUMN IF NOT EXISTS chain_auto_sign_granted_at BIGINT",
+  "ALTER TABLE users ADD COLUMN IF NOT EXISTS last_dashboard_visit BIGINT",
+  "ALTER TABLE emails ADD COLUMN IF NOT EXISTS action_link TEXT",
 ]) {
   await pool.query(sql);
 }
@@ -177,6 +186,20 @@ export const setDigestDay = (userId, day) =>
   run("UPDATE users SET last_digest_day=? WHERE id=?", [day, userId]);
 export const setMuteHours = (userId, start, end) =>
   run("UPDATE users SET mute_start=?, mute_end=? WHERE id=?", [start, end, userId]);
+export const setWalletAddress = async (userId, address) => {
+  const current = await get("SELECT wallet_address FROM users WHERE id=?", [userId]);
+  if (current && current.wallet_address && current.wallet_address.toLowerCase() !== address.toLowerCase()) {
+    // address changed — the old auto-sign grant was bound to the old address, so it no longer applies
+    return run(
+      "UPDATE users SET wallet_address=?, chain_auto_sign=FALSE, chain_auto_sign_sig=NULL, chain_auto_sign_granted_at=NULL WHERE id=?",
+      [address, userId]
+    );
+  }
+  return run("UPDATE users SET wallet_address=? WHERE id=?", [address, userId]);
+};
+export const setChainAutoSign = (userId, { enabled, signature = null, grantedAt = null }) =>
+  run("UPDATE users SET chain_auto_sign=?, chain_auto_sign_sig=?, chain_auto_sign_granted_at=? WHERE id=?",
+    [enabled, signature, grantedAt, userId]);
 
 /* ---------- team ---------- */
 export const teamAdd = (ownerId, memberId) =>
@@ -290,6 +313,29 @@ export const isBlacklisted = async (userId, address) => {
   return !!row;
 };
 
+/* ---------- on-chain status logs (Monad) ---------- */
+const hydrateChainLog = (row) => row && {
+  id: row.id, userId: row.user_id, emailId: row.email_id, eventType: row.event_type,
+  status: row.status, txHash: row.tx_hash, createdAt: row.created_at, updatedAt: row.updated_at,
+};
+export const createChainLog = async (userId, emailId, eventType, status = "pending_approval") => {
+  const info = await run(
+    "INSERT INTO chain_logs (user_id, email_id, event_type, status, created_at) VALUES (?,?,?,?,?) RETURNING id",
+    [userId, emailId, eventType, status, Date.now()]
+  );
+  return Number(info.lastInsertRowid);
+};
+export const chainLogById = async (id) => hydrateChainLog(await get("SELECT * FROM chain_logs WHERE id = ?", [id]));
+export const updateChainLog = (id, fields) => {
+  const map = { status: "status", txHash: "tx_hash" };
+  const sets = ["updated_at = ?"], vals = [Date.now()];
+  for (const [k, col] of Object.entries(map)) {
+    if (k in fields) { sets.push(`${col} = ?`); vals.push(fields[k]); }
+  }
+  vals.push(id);
+  return run(`UPDATE chain_logs SET ${sets.join(", ")} WHERE id = ?`, vals);
+};
+
 /* ---------- custom data tables (merchant-defined extraction folders) ---------- */
 const hydrateTable = (row) => row && { id: row.id, userId: row.user_id, name: row.name, fields: JSON.parse(row.fields), createdAt: row.created_at };
 const hydrateRow = (row) => row && { id: row.id, tableId: row.table_id, userId: row.user_id, emailId: row.email_id, values: JSON.parse(row.values_json), createdAt: row.created_at };
@@ -315,12 +361,13 @@ export const delDataRow = (userId, id) => run("DELETE FROM data_rows WHERE id = 
 
 /* ---------- emails ---------- */
 export const insertEmail = (e) =>
-  run(`INSERT INTO emails (id, user_id, uid, from_text, from_addr, subject, body, attachments, message_id, received_at, priority, summary, action, status, snoozed_until, sent_reply, category, highlights, blocked)
-       VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`,
+  run(`INSERT INTO emails (id, user_id, uid, from_text, from_addr, subject, body, attachments, message_id, received_at, priority, summary, action, status, snoozed_until, sent_reply, category, highlights, blocked, action_link)
+       VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`,
     [e.id, e.userId, e.uid ?? null, e.from ?? null, e.fromAddr ?? null, e.subject ?? null, e.body ?? null,
      JSON.stringify(e.attachments || []), e.messageId ?? null, e.receivedAt ?? Date.now(),
      e.priority ?? null, e.summary ?? null, e.action ?? null, e.status || "new",
-     e.snoozedUntil ?? null, e.sentReply ?? null, e.category ?? null, JSON.stringify(e.highlights || []), !!e.blocked]);
+     e.snoozedUntil ?? null, e.sentReply ?? null, e.category ?? null, JSON.stringify(e.highlights || []), !!e.blocked,
+     e.actionLink ?? null]);
 
 export const emailById = async (id) => hydrate(await get("SELECT * FROM emails WHERE id = ?", [id]));
 export const openEmailsFor = async (userId) =>
@@ -330,7 +377,7 @@ export const dueSnoozed = async () =>
   (await all("SELECT * FROM emails WHERE status != 'done' AND snoozed_until IS NOT NULL AND snoozed_until <= ?",
     [Date.now()])).map(hydrate);
 export const updateEmail = (id, fields) => {
-  const map = { status: "status", snoozedUntil: "snoozed_until", sentReply: "sent_reply", summary: "summary", action: "action", priority: "priority", scamRisk: "scam_risk", scamReasons: "scam_reasons" };
+  const map = { status: "status", snoozedUntil: "snoozed_until", sentReply: "sent_reply", summary: "summary", action: "action", priority: "priority", scamRisk: "scam_risk", scamReasons: "scam_reasons", actionLink: "action_link" };
   const sets = [], vals = [];
   for (const [k, col] of Object.entries(map)) {
     if (k in fields) { sets.push(`${col} = ?`); vals.push(fields[k]); }
@@ -341,6 +388,12 @@ export const updateEmail = (id, fields) => {
 };
 export const recentEmailsFor = async (userId, limit = 50) =>
   (await all("SELECT * FROM emails WHERE user_id = ? ORDER BY received_at DESC LIMIT ?", [userId, limit])).map(hydrate);
+
+/* ---------- dashboard "new mail since last visit" notification ---------- */
+export const emailsSince = async (userId, sinceTs, limit = 50) =>
+  (await all("SELECT * FROM emails WHERE user_id = ? AND received_at > ? ORDER BY received_at DESC LIMIT ?", [userId, sinceTs, limit])).map(hydrate);
+export const setLastDashboardVisit = (userId, ts) =>
+  run("UPDATE users SET last_dashboard_visit=? WHERE id=?", [ts, userId]);
 
 export const knownSendersFor = async (userId) => {
   const rows = await all("SELECT DISTINCT from_addr FROM emails WHERE user_id=? AND sent_reply IS NOT NULL", [userId]);
@@ -380,7 +433,7 @@ function hydrate(row) {
     status: row.status, snoozedUntil: row.snoozed_until, sentReply: row.sent_reply,
     pendingPush: row.pending_push, claimedBy: row.claimed_by, category: row.category,
     highlights: JSON.parse(row.highlights || "[]"), blocked: !!row.blocked,
-    scamRisk: row.scam_risk, scamReasons: row.scam_reasons,
+    scamRisk: row.scam_risk, scamReasons: row.scam_reasons, actionLink: row.action_link,
   };
 }
 
@@ -388,12 +441,6 @@ export const userByAnyEmail = (addr) => {
   const a = (addr || "").toLowerCase();
   return get("SELECT * FROM users WHERE email = ? OR mail_user = ?", [a, a]);
 };
-
-/* ---------- mainnet payment replay guard ---------- */
-export const isTxUsed = async (txHash) => !!(await get("SELECT 1 FROM used_payments WHERE tx_hash = ?", [txHash]));
-export const markTxUsed = (txHash, service, amount, payer) =>
-  run("INSERT INTO used_payments (tx_hash, service, amount, payer, used_at) VALUES (?,?,?,?,?)",
-    [txHash, service, amount, payer, Date.now()]);
 
 /* ---------- seen uids ---------- */
 export const isSeen = async (userId, uid) => !!(await get("SELECT 1 FROM seen_uids WHERE user_id = ? AND uid = ?", [userId, uid]));

@@ -1,23 +1,23 @@
-# MAILER Platform (v2) — hosted, multi-user
+# Mailer Platform (v2) — hosted, multi-user
 
-One server = the MAILER website + dashboard + the one official Telegram bot + WhatsApp routing + per-user inbox watching. Users onboard entirely from the site: sign up → connect inbox → set rules/templates → one tap to connect Telegram or WhatsApp. Nobody except you ever touches BotFather or Twilio.
+One server = the Mailer website + dashboard + the one official Telegram bot + WhatsApp routing + per-user inbox watching. Users onboard entirely from the site: sign up → connect inbox → set rules/templates → one tap to connect Telegram or WhatsApp. Nobody except you ever touches BotFather or Twilio.
 
 ## User flow (what your customers experience)
 
-1. Land on your MAILER site → sign up (email + password)
+1. Land on your Mailer site → sign up (email + password)
 2. Connect their inbox (Gmail App Password or any IMAP) — verified live before saving
 3. Set priority rules and reply templates on the dashboard
 4. Tap **Connect WhatsApp** (primary) → WhatsApp opens with their personal link message pre-filled → hit send → bound. Emails start flowing to their chat with summaries, actions and numbered options. (Sandbox users send the Twilio join code once first; production numbers skip that.)
-5. Or/also tap **Connect Telegram** → opens the official MAILER bot with a magic link → press START → bound (with inline buttons).
+5. Or/also tap **Connect Telegram** → opens the official Mailer bot with a magic link → press START → bound (with inline buttons).
 
-If a user links both, MAILER delivers to WhatsApp first.
+If a user links both, Mailer delivers to WhatsApp first.
 
-Replies are always: user asks → MAILER drafts → user approves → sent from *their own* email address.
+Replies are always: user asks → Mailer drafts → user approves → sent from *their own* email address.
 
 ## Operator setup (you, once)
 
 ### 1. Create the one official bot
-- Telegram → **@BotFather** → `/newbot` → name it (e.g. MAILER) → username (e.g. `MailerBot`)
+- Telegram → **@BotFather** → `/newbot` → name it (e.g. Mailer) → username (e.g. `MailerBot`)
 - Put the token in `TELEGRAM_BOT_TOKEN` and the username in `TELEGRAM_BOT_USERNAME`
 
 ### 2. Configure
@@ -58,13 +58,13 @@ Any Node host works — Railway, Render, Fly.io, or a small VPS:
 
 ## Feature notes
 
-- **Voice-note replies (WhatsApp AND Telegram):** send a voice note instead of typing your reply instruction — MAILER transcribes it and drafts. Requires `OPENAI_API_KEY` in `.env` (Whisper); politely declines if not set.
+- **Voice-note replies (WhatsApp AND Telegram):** send a voice note instead of typing your reply instruction — Mailer transcribes it and drafts. Requires `OPENAI_API_KEY` in `.env` (Whisper); politely declines if not set.
 - **Quiet hours:** `/mute 21 7` or set on the dashboard. Pushes queue during mute and arrive as a "🌙 While you were away" batch when it ends.
-- **Silence catcher:** every reply MAILER sends is watched; if the other side stays quiet for `NUDGE_DAYS` (default 3), you get "Still silent — draft a nudge?" with one-tap follow-up (approval-gated like everything else).
-- **Team inboxes:** `/team add staff@biz.com` (they need an MAILER account with a linked chat). Your pushes fan out to the whole team with a 🙋 Claim button; claims are announced so two people never answer the same customer. Team replies go out from *your* address using *your* templates.
+- **Silence catcher:** every reply Mailer sends is watched; if the other side stays quiet for `NUDGE_DAYS` (default 3), you get "Still silent — draft a nudge?" with one-tap follow-up (approval-gated like everything else).
+- **Team inboxes:** `/team add staff@biz.com` (they need an Mailer account with a linked chat). Your pushes fan out to the whole team with a 🙋 Claim button; claims are announced so two people never answer the same customer. Team replies go out from *your* address using *your* templates.
 - **Search:** `/find acme invoice` returns matching emails with full action buttons.
 - **Weekly report:** Sundays after the digest — emails processed, handled, replies sent, busiest senders. Also `/report` anytime.
-- **Forward-to-MAILER:** set the `FORWARD_MAIL_*` vars to a dedicated inbox (e.g. `inbox@yourdomain.com`). Any signed-up user can forward an email there from their registered address and it's processed to their chat instantly — zero-setup way to try MAILER.
+- **Forward-to-Mailer:** set the `FORWARD_MAIL_*` vars to a dedicated inbox (e.g. `inbox@yourdomain.com`). Any signed-up user can forward an email there from their registered address and it's processed to their chat instantly — zero-setup way to try Mailer.
 
 ## Architecture
 ```

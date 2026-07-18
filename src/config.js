@@ -33,12 +33,23 @@ export const config = {
   // optional: voice-note transcription (OpenAI Whisper). Leave blank to disable.
   openaiKey: process.env.OPENAI_API_KEY || "",
 
-  // optional: the shared "forward anything to MAILER" inbox. Leave blank to disable.
+  // optional: the shared "forward anything to Mailer" inbox. Leave blank to disable.
   forward: {
     user: process.env.FORWARD_MAIL_USER || "",
     password: process.env.FORWARD_MAIL_PASSWORD || "",
     imapHost: process.env.FORWARD_IMAP_HOST || "imap.gmail.com",
     imapPort: Number(process.env.FORWARD_IMAP_PORT || 993),
     enabled: !!(process.env.FORWARD_MAIL_USER && process.env.FORWARD_MAIL_PASSWORD),
+  },
+
+  // on-chain status logging (Monad mainnet) — server wallet signs every log tx itself,
+  // no user wallet popup. Disabled (no-ops) until MONAD_WALLET_KEY + the contract
+  // address are both set. See src/chain.js.
+  monad: {
+    rpcUrl: process.env.MONAD_RPC_URL || "https://rpc.monad.xyz",
+    chainId: Number(process.env.MONAD_CHAIN_ID || 143),
+    walletKey: process.env.MONAD_WALLET_KEY || "",
+    contractAddress: process.env.MAILER_LOG_CONTRACT_ADDRESS || "",
+    explorerUrl: process.env.MONAD_EXPLORER_URL || "https://monadscan.com",
   },
 };

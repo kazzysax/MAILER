@@ -6,13 +6,32 @@ import * as db from "./db.js";
 import { registerSender, onText, onAction } from "./engine.js";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
-const LOGO_PATH = path.join(__dirname, "..", "public", "assets", "mailer-logo.jpeg");
+// small dedicated crop for the /start welcome photo — the full-res logo (593x593)
+// rendered too large/heavy in-chat
+const LOGO_PATH = path.join(__dirname, "..", "public", "assets", "mailer-logo-telegram.jpeg");
+
+const COMMAND_MENU = [
+  { command: "roundup", description: "Digest of everything open" },
+  { command: "open", description: "Re-push open emails" },
+  { command: "find", description: "Search your emails" },
+  { command: "mute", description: "Quiet hours — /mute 21 7 or /mute off" },
+  { command: "report", description: "Your weekly numbers" },
+  { command: "rules", description: "List priority rules" },
+  { command: "addrule", description: "Add a priority rule" },
+  { command: "templates", description: "List reply templates" },
+  { command: "addtemplate", description: "Add a reply template" },
+  { command: "team", description: "Manage your team inbox" },
+  { command: "cancel", description: "Cancel current flow" },
+  { command: "help", description: "What Mailer can do" },
+];
 
 export function startTelegramBot() {
   const bot = new TelegramBot(config.telegramToken, { polling: true });
 
-  registerSender("telegram", async (chatId, text, options) => {
-    const opts = {};
+  bot.setMyCommands(COMMAND_MENU).catch((e) => console.error("Telegram setMyCommands failed:", e.message));
+
+  registerSender("telegram", async (chatId, text, options, html) => {
+    const opts = html ? { parse_mode: "HTML" } : {};
     if (options && options.length) {
       const rows = [];
       for (let i = 0; i < options.length; i += 3) {
@@ -69,13 +88,13 @@ export function startTelegramBot() {
           const user = await db.userById(userId);
           return onText(user, "/start");
         }
-        return bot.sendMessage(chatId, "That link expired. Get a fresh one from your MAILER dashboard → Connect Telegram.");
+        return bot.sendMessage(chatId, "That link expired. Get a fresh one from your Mailer dashboard → Connect Telegram.");
       }
     }
 
     const user = await db.userByChat(chatId);
     if (!user) {
-      return bot.sendMessage(chatId, `This chat isn't linked to an MAILER account yet.\n\nSign up at ${config.baseUrl}, connect your inbox, then tap "Connect Telegram" — it opens me with your personal link.`);
+      return bot.sendMessage(chatId, `This chat isn't linked to an Mailer account yet.\n\nSign up at ${config.baseUrl}, connect your inbox, then tap "Connect Telegram" — it opens me with your personal link.`);
     }
     await onText(user, text);
   });

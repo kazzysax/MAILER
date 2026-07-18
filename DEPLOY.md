@@ -1,4 +1,4 @@
-# MAILER — Deployment Guide
+# Mailer — Deployment Guide
 
 Everything you need to take mailer-platform from zip file to live product.
 Total time: ~30–45 minutes. Follow in order.
@@ -14,15 +14,15 @@ Total time: ~30–45 minutes. Follow in order.
 | Twilio account (WhatsApp) | twilio.com → free account | 10 min |
 | A host | Railway.app / Render.com / any VPS | 10 min |
 | (Optional) OpenAI key | platform.openai.com — voice notes only | 2 min |
-| (Optional) A Gmail for forward-to-MAILER | any Gmail with app password | 5 min |
+| (Optional) A Gmail for forward-to-Mailer | any Gmail with app password | 5 min |
 
 ---
 
-## 1. Create the official MAILER Telegram bot
+## 1. Create the official Mailer Telegram bot
 
 1. Open Telegram, search **@BotFather**, press Start
 2. Send `/newbot`
-3. Name: `MAILER` (display name, anything works)
+3. Name: `Mailer` (display name, anything works)
 4. Username: something ending in "bot", e.g. `MailerBot` or `mailer_ng_bot`
    — this must be unique on Telegram; keep trying until accepted
 5. BotFather replies with a **token** like `7123456789:AAF...` — copy it
@@ -45,7 +45,7 @@ You need: **the token** and **the username** (without @).
 6. LEAVE THIS TAB OPEN — after deploying (step 4) you'll come back to set
    the webhook URL.
 
-Sandbox rule: every user must send the join code once before MAILER can
+Sandbox rule: every user must send the join code once before Mailer can
 message them. The dashboard tells them this automatically.
 
 Production WhatsApp (your own branded number, no join code, digests
@@ -69,7 +69,7 @@ business.facebook.com; the code needs zero changes when you switch.
    `https://mailer-production.up.railway.app`
 6. Variables tab → add every env var (see step 4 below)
 7. Deploy. Check the logs for:
-   `MAILER platform up at ... `
+   `Mailer platform up at ... `
    `Telegram bot @YourBot up (shared, multi-user).`
    `WhatsApp channel up (primary) ...`
 
@@ -124,7 +124,7 @@ NUDGE_DAYS=3
 # optional — voice-note replies:
 OPENAI_API_KEY=sk-...
 
-# optional — forward-to-MAILER inbox:
+# optional — forward-to-Mailer inbox:
 FORWARD_MAIL_USER=inbox@yourdomain.com
 FORWARD_MAIL_PASSWORD=<gmail app password, no spaces>
 ```
@@ -146,21 +146,21 @@ Back in the Twilio sandbox settings (step 2 tab):
   `https://<your-domain>/hooks/whatsapp`  — method **POST**
 - Save.
 
-Without this, MAILER can send WhatsApp messages but never hears replies.
+Without this, Mailer can send WhatsApp messages but never hears replies.
 
 ---
 
 ## 6. First-hour smoke test (run ALL of it, in order)
 
-1. Open `BASE_URL` → the MAILER landing page loads
+1. Open `BASE_URL` → the Mailer landing page loads
 2. Sign up with a real email + password
 3. Connect a Gmail inbox:
    - Google account → 2-Step Verification ON
    - myaccount.google.com/apppasswords → create one
-   - paste WITHOUT spaces (MAILER will reject spaces and tell you)
+   - paste WITHOUT spaces (Mailer will reject spaces and tell you)
    - expect: "Inbox connected"
 4. Tap **Connect WhatsApp** → WhatsApp opens pre-filled → send it
-   → expect the MAILER welcome message
+   → expect the Mailer welcome message
    (sandbox: send the join code first if you haven't)
 5. Tap **Connect Telegram** → bot opens → press START → welcome message
 6. From ANOTHER email account, send a test email to the connected inbox
@@ -173,7 +173,7 @@ Without this, MAILER can send WhatsApp messages but never hears replies.
 11. Try: /find invoice · /mute 21 7 · /report · a voice note (if key set)
 12. /roundup → digest arrives
 
-If all 12 pass, MAILER is live. 🎉
+If all 12 pass, Mailer is live. 🎉
 
 ---
 

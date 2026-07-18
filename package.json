@@ -1,11 +1,13 @@
 {
   "name": "mailer-platform",
   "version": "2.0.0",
-  "description": "MAILER hosted platform — site signup -> connect inbox -> one-click Telegram/WhatsApp bot. Multi-tenant.",
+  "description": "Mailer hosted platform — site signup -> connect inbox -> one-click Telegram/WhatsApp bot. Multi-tenant.",
   "type": "module",
   "main": "src/index.js",
   "scripts": {
-    "start": "node src/index.js"
+    "start": "node src/index.js",
+    "deploy-contract": "node scripts/deploy-contract.js",
+    "generate-wallet": "node scripts/generate-wallet.js"
   },
   "engines": {
     "node": ">=22"
@@ -21,5 +23,8 @@
     "nodemailer": "^6.9.14",
     "pg": "^8.22.0",
     "viem": "^2.54.6"
+  },
+  "devDependencies": {
+    "solc": "^0.8.24"
   }
 }

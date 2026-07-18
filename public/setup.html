@@ -3,11 +3,11 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Set up MAILER</title>
-<link rel="icon" type="image/x-icon" href="assets/favicon.ico?v=5">
-<link rel="icon" type="image/png" sizes="32x32" href="assets/favicon-32.png?v=5">
-<link rel="icon" type="image/png" sizes="192x192" href="assets/favicon-192.png?v=5">
-<link rel="apple-touch-icon" href="assets/apple-touch-icon.png?v=5">
+<title>Set up Mailer</title>
+<link rel="icon" type="image/x-icon" href="assets/favicon.ico?v=7">
+<link rel="icon" type="image/png" sizes="32x32" href="assets/favicon-32.png?v=7">
+<link rel="icon" type="image/png" sizes="192x192" href="assets/favicon-192.png?v=7">
+<link rel="apple-touch-icon" href="assets/apple-touch-icon.png?v=7">
 <link rel="preconnect" href="https://api.fontshare.com">
 <link href="https://api.fontshare.com/v2/css?f[]=satoshi@400,500,700,900&display=swap" rel="stylesheet">
 <script src="https://accounts.google.com/gsi/client" async defer onload="gsiReady=true; maybeInitGoogle()"></script>
@@ -16,7 +16,7 @@
 :root{
   --ink:#000000;--ink-2:#0B0B0B;--ink-3:#141414;--line:#242424;
   --paper:#F7F5F1;--muted:#8C8C8C;--muted-2:#5C5C5C;
-  --amber:#FF6B2C;--amber-soft:#2B180D;--teal:#39B27D;--teal-soft:#0F2119;--radius:14px;
+  --violet:#8B5CF6;--violet-soft:#241B3D;--teal:#39B27D;--teal-soft:#0F2119;--radius:14px;
   --red:#E5645C;--red-soft:#301412;
 }
 *{box-sizing:border-box;margin:0;padding:0}
@@ -31,7 +31,7 @@ a{color:inherit;text-decoration:none}
 .top{border-bottom:1px solid var(--line);background:rgba(0,0,0,.85);backdrop-filter:blur(16px) saturate(1.15)}
 .top-inner{max-width:960px;margin:0 auto;padding:0 24px;height:64px;display:flex;align-items:center;gap:11px}
 .brand{display:flex;align-items:center;gap:11px;font-weight:700;font-size:19px;letter-spacing:1.5px}
-.logo{width:38px;height:38px;flex-shrink:0;display:grid;place-items:center;border-radius:10px;overflow:hidden;background:#0a0a0a;border:1px solid rgba(255,107,44,.22);box-shadow:0 6px 18px -6px rgba(232,90,27,.55)}
+.logo{width:38px;height:38px;flex-shrink:0;display:grid;place-items:center;border-radius:10px;overflow:hidden;background:#0a0a0a;border:1px solid rgba(139,92,246,.22);box-shadow:0 6px 18px -6px rgba(109,40,217,.55)}
 .logo img{width:100%;height:100%;object-fit:cover;display:block;transform:scale(1.06)}
 .top-inner .exit{margin-left:auto;color:var(--muted-2);font-size:13.5px;transition:color .2s}
 .top-inner .exit:hover{color:var(--paper)}
@@ -40,7 +40,7 @@ a{color:inherit;text-decoration:none}
 .step{display:flex;align-items:center;gap:12px;flex-shrink:0}
 .step .num{width:36px;height:36px;border-radius:50%;display:grid;place-items:center;font-family:'JetBrains Mono';font-weight:600;font-size:14px;border:1.5px solid var(--line);background:var(--ink-3);color:var(--muted-2);transition:all .35s}
 .step .lbl{font-weight:500;font-size:15px;color:var(--muted-2);transition:color .35s;white-space:nowrap}
-.step.active .num{background:var(--amber);border-color:var(--amber);color:#0A0500;box-shadow:0 0 0 5px rgba(255,107,44,.16)}
+.step.active .num{background:var(--violet);border-color:var(--violet);color:#fff;box-shadow:0 0 0 5px rgba(139,92,246,.16)}
 .step.active .lbl{color:var(--paper)}
 .step.done .num{background:var(--teal);border-color:var(--teal);color:var(--ink)}
 .step.done .lbl{color:var(--muted)}
@@ -51,44 +51,44 @@ a{color:inherit;text-decoration:none}
 .panel{display:none;animation:fade .4s ease both}
 .panel.show{display:block}
 @keyframes fade{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
-.p-eyebrow{font-family:'JetBrains Mono';font-size:12px;letter-spacing:2px;text-transform:uppercase;color:var(--amber);margin-bottom:14px}
+.p-eyebrow{font-family:'JetBrains Mono';font-size:12px;letter-spacing:2px;text-transform:uppercase;color:var(--violet);margin-bottom:14px}
 h1{font-weight:700;font-size:32px;letter-spacing:-.6px;line-height:1.1;margin-bottom:12px}
 .sub{color:var(--muted);font-size:16px;margin-bottom:34px;max-width:480px;line-height:1.6}
 .card{background:linear-gradient(180deg,rgba(18,18,18,.98),var(--ink-2));border:1px solid var(--line);border-radius:var(--radius);padding:28px;box-shadow:0 20px 50px -32px rgba(0,0,0,.8)}
 label{display:block;font-size:13px;font-weight:600;color:var(--muted);margin-bottom:8px;letter-spacing:.2px}
 input,select,textarea{width:100%;background:var(--ink);border:1px solid var(--line);color:var(--paper);border-radius:10px;padding:13px 15px;font-family:'Satoshi';font-size:15px;margin-bottom:18px;transition:border-color .2s,box-shadow .2s}
-input:focus,select:focus,textarea:focus{outline:none;border-color:var(--amber);box-shadow:0 0 0 3px rgba(255,107,44,.12)}
+input:focus,select:focus,textarea:focus{outline:none;border-color:var(--violet);box-shadow:0 0 0 3px rgba(139,92,246,.12)}
 .btn{display:inline-flex;align-items:center;justify-content:center;gap:10px;font-weight:600;font-size:15px;padding:13px 22px;border-radius:999px;border:1px solid transparent;cursor:pointer;transition:all .2s;width:100%}
 .btn:disabled{opacity:.5;cursor:not-allowed}
-.btn-primary{background:var(--amber);color:#0A0500;box-shadow:0 8px 22px -10px rgba(255,107,44,.55)}
-.btn-primary:hover:not(:disabled){background:#ff7f47}
+.btn-primary{background:var(--violet);color:#fff;box-shadow:0 8px 22px -10px rgba(139,92,246,.55)}
+.btn-primary:hover:not(:disabled){background:#9F75FF}
 .btn-ghost{background:transparent;border-color:var(--line);color:var(--paper)}
 .btn-ghost:hover{border-color:var(--muted);background:rgba(255,255,255,.03)}
 .auth-tabs{display:flex;gap:8px;margin-bottom:18px;background:var(--ink);border:1px solid var(--line);border-radius:999px;padding:4px}
 .auth-tabs .btn{width:auto;flex:1;padding:10px;border:none}
-.auth-tabs .btn.active{background:var(--amber);color:#0A0500;border-color:var(--amber);box-shadow:none}
+.auth-tabs .btn.active{background:var(--violet);color:#fff;border-color:var(--violet);box-shadow:none}
 .nav-row{display:flex;gap:12px;margin-top:26px}
 .nav-row .btn{width:auto;flex:1}
 .skip{background:none;border:none;color:var(--muted);font-size:14px;cursor:pointer;text-decoration:underline;text-underline-offset:3px}
 .channels{display:grid;grid-template-columns:1fr 1fr;gap:14px}
 @media(max-width:520px){.channels{grid-template-columns:1fr}}
 .chan{background:var(--ink);border:1px solid var(--line);border-radius:12px;padding:20px;text-align:center;cursor:pointer;transition:all .2s}
-.chan:hover{border-color:rgba(255,107,44,.35);transform:translateY(-2px);box-shadow:0 12px 28px -18px rgba(255,107,44,.3)}
-.chan.primary{border-color:rgba(255,107,44,.28);background:linear-gradient(180deg,rgba(255,107,44,.06),var(--ink))}
+.chan:hover{border-color:rgba(139,92,246,.35);transform:translateY(-2px);box-shadow:0 12px 28px -18px rgba(139,92,246,.3)}
+.chan.primary{border-color:rgba(139,92,246,.28);background:linear-gradient(180deg,rgba(139,92,246,.06),var(--ink))}
 .chan-ic{width:48px;height:48px;border-radius:12px;display:grid;place-items:center;margin:0 auto 12px;font-size:24px;background:var(--ink-3);border:1px solid var(--line)}
 .chan h3{font-size:16px;font-weight:600;margin-bottom:4px}
 .chan p{font-size:12.5px;color:var(--muted)}
-.chan .badge{display:inline-block;font-family:'JetBrains Mono';font-size:10px;letter-spacing:.8px;text-transform:uppercase;color:var(--amber);border:1px solid rgba(255,107,44,.25);padding:2px 8px;border-radius:5px;margin-top:10px}
+.chan .badge{display:inline-block;font-family:'JetBrains Mono';font-size:10px;letter-spacing:.8px;text-transform:uppercase;color:var(--violet);border:1px solid rgba(139,92,246,.25);padding:2px 8px;border-radius:5px;margin-top:10px}
 .chan .badge.ok{color:var(--teal);border-color:var(--teal-soft)}
 .rule-row{display:flex;gap:10px;margin-bottom:14px;flex-wrap:wrap}
 .rule-row input{margin-bottom:0;flex:1;min-width:120px}
 .rule-row select{margin-bottom:0;width:auto}
 .rule-add{background:var(--ink-3);border:1px solid var(--line);color:var(--paper);border-radius:10px;padding:0 18px;cursor:pointer;font-weight:600;font-size:20px;transition:border-color .2s}
-.rule-add:hover{border-color:var(--amber)}
+.rule-add:hover{border-color:var(--violet)}
 .rules-list{margin-top:8px;display:flex;flex-direction:column;gap:8px}
 .rule-chip{display:flex;align-items:center;gap:10px;background:var(--ink);border:1px solid var(--line);border-radius:9px;padding:10px 13px;font-size:13.5px}
 .pill{font-family:'JetBrains Mono';font-size:10px;letter-spacing:.6px;text-transform:uppercase;padding:2px 8px;border-radius:5px;font-weight:500}
-.pill.high{background:var(--amber-soft);color:var(--amber)}
+.pill.high{background:var(--violet-soft);color:var(--violet)}
 .pill.low{background:var(--ink-3);color:var(--muted)}
 .rule-chip .x{margin-left:auto;color:var(--muted-2);cursor:pointer;font-size:16px;background:none;border:none}
 .done-wrap{text-align:center;padding:20px 0}
@@ -99,7 +99,7 @@ input:focus,select:focus,textarea:focus{outline:none;border-color:var(--amber);b
 .or-divider{display:none;align-items:center;gap:12px;color:var(--muted-2);font-size:12.5px;margin:0 0 18px}
 .or-divider::before,.or-divider::after{content:"";flex:1;height:1px;background:var(--line)}
 .guide{background:var(--ink);border:1px solid var(--line);border-radius:10px;padding:14px 16px;margin:0 0 18px}
-.guide summary{color:var(--amber);font-weight:600;font-size:13.5px;margin-bottom:0}
+.guide summary{color:var(--violet);font-weight:600;font-size:13.5px;margin-bottom:0}
 .guide ol{margin:12px 0 0;padding-left:20px;color:var(--muted);font-size:13px;line-height:1.7}
 .guide li{margin-bottom:2px}
 .pw-wrap{position:relative;margin-bottom:18px}
@@ -116,7 +116,7 @@ details summary{cursor:pointer;margin-bottom:8px}
 <body>
 <div class="top">
   <div class="top-inner">
-    <div class="brand"><span class="logo"><img src="assets/mailer-logo.jpeg?v=5" alt="MAILER" width="40" height="40"></span>MAILER</div>
+    <div class="brand"><span class="logo"><img src="assets/mailer-logo.jpeg?v=7" alt="Mailer" width="40" height="40"></span>Mailer</div>
     <a href="index.html" class="exit">Exit setup</a>
   </div>
 </div>
@@ -140,7 +140,7 @@ details summary{cursor:pointer;margin-bottom:8px}
   <!-- STEP 1 — auth -->
   <div class="panel show" id="panel-1">
     <div class="p-eyebrow">Step 1 of 5</div>
-    <h1>Sign in to MAILER</h1>
+    <h1>Sign in to Mailer</h1>
     <p class="sub">Create an account or log in with email and password (8+ characters).</p>
     <div class="card">
       <div class="g-signin" id="g-signin"></div>
@@ -169,7 +169,7 @@ details summary{cursor:pointer;margin-bottom:8px}
         <ol>
           <li>Go to <b>myaccount.google.com/apppasswords</b></li>
           <li>Turn on 2-Step Verification if it asks you to</li>
-          <li>Type a name like <b>MAILER</b>, then tap Create</li>
+          <li>Type a name like <b>Mailer</b>, then tap Create</li>
           <li>Google shows a 16-letter password — copy it</li>
           <li>Paste it below, then tap the 👁 to check for spaces</li>
         </ol>
@@ -202,7 +202,7 @@ details summary{cursor:pointer;margin-bottom:8px}
   <div class="panel" id="panel-3">
     <div class="p-eyebrow">Step 3 of 5</div>
     <h1>Connect your chat</h1>
-    <p class="sub">Where MAILER delivers your inbox. Link at least one channel.</p>
+    <p class="sub">Where Mailer delivers your inbox. Link at least one channel.</p>
     <div class="card">
       <div class="channels">
         <div class="chan primary" id="chan-wa" onclick="linkWhatsApp()">
@@ -214,7 +214,7 @@ details summary{cursor:pointer;margin-bottom:8px}
         <div class="chan" id="chan-tg" onclick="linkTelegram()">
           <div class="chan-ic">✈️</div>
           <h3>Telegram</h3>
-          <p>Opens the MAILER bot — press START</p>
+          <p>Opens the Mailer bot — press START</p>
           <span class="badge" id="tg-badge">Instant</span>
         </div>
       </div>
@@ -254,7 +254,7 @@ details summary{cursor:pointer;margin-bottom:8px}
   <div class="panel" id="panel-5">
     <div class="done-wrap">
       <div class="done-ring">✓</div>
-      <h1>MAILER is watching your inbox.</h1>
+      <h1>Mailer is watching your inbox.</h1>
       <p class="sub" style="margin:12px auto 0">You're set. Prioritized, summarized email will flow to your chat — and your dashboard is ready.</p>
       <div style="max-width:320px;margin:34px auto 0">
         <a class="btn btn-primary" href="dashboard.html">Go to my dashboard →</a>
@@ -393,7 +393,7 @@ async function connectInbox() {
         smtpPort: $('in-smtpport').value || undefined,
       },
     });
-    showMsg('inbox-msg', 'Inbox connected — MAILER is watching it now.', true);
+    showMsg('inbox-msg', 'Inbox connected — Mailer is watching it now.', true);
     $('inbox-ok').style.display = 'block';
     $('inbox-next').disabled = false;
   } catch (e) {
@@ -425,7 +425,7 @@ async function linkTelegram() {
   try {
     const { link } = await api('/link/telegram', { method: 'POST' });
     showMsg('chat-msg', 'Opening Telegram… press START in the bot chat.', true);
-    $('chat-hint').innerHTML = 'If nothing opened: <a href="' + link + '" target="_blank" style="color:var(--amber)">' + link + '</a>';
+    $('chat-hint').innerHTML = 'If nothing opened: <a href="' + link + '" target="_blank" style="color:var(--violet)">' + link + '</a>';
     window.open(link, '_blank');
     setTimeout(refreshChatStatus, 8000);
   } catch (e) {
@@ -438,7 +438,7 @@ async function linkWhatsApp() {
   try {
     const { link, number } = await api('/link/whatsapp/start', { method: 'POST' });
     showMsg('chat-msg', 'Opening WhatsApp… hit send on the pre-filled message.', true);
-    $('chat-hint').innerHTML = 'Sandbox users: join code to ' + number + ' first. Link: <a href="' + link + '" target="_blank" style="color:var(--amber)">open WhatsApp</a>';
+    $('chat-hint').innerHTML = 'Sandbox users: join code to ' + number + ' first. Link: <a href="' + link + '" target="_blank" style="color:var(--violet)">open WhatsApp</a>';
     window.open(link, '_blank');
     setTimeout(refreshChatStatus, 8000);
   } catch (e) {

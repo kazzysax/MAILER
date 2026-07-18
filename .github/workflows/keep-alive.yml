@@ -9,5 +9,5 @@ jobs:
   ping:
     runs-on: ubuntu-latest
     steps:
-      - name: Ping MAILER
+      - name: Ping Mailer
         run: curl -sf --max-time 30 https://mailer-platform.onrender.com/ -o /dev/null

@@ -3,7 +3,7 @@ import * as db from "./db.js";
 import { registerSender, onText, onAction } from "./engine.js";
 
 /*
-WhatsApp — MAILER's primary channel.
+WhatsApp — Mailer's primary channel.
 One Twilio WhatsApp number serves every user; inbound messages are routed
 to accounts by the sender's number.
 
@@ -103,12 +103,12 @@ export function initWhatsApp(app) {
         const user = await db.userById(userId);
         return onText(user, "/start");
       }
-      return twilioSend(from, `That link expired. Get a fresh one from your MAILER dashboard → Connect WhatsApp.`);
+      return twilioSend(from, `That link expired. Get a fresh one from your Mailer dashboard → Connect WhatsApp.`);
     }
 
     const user = await db.userByWhatsApp(from);
     if (!user) {
-      return twilioSend(from, `This number isn't linked to an MAILER account yet.\n\nSign up at ${config.baseUrl} and tap "Connect WhatsApp" — it opens this chat with your personal link ready to send.`);
+      return twilioSend(from, `This number isn't linked to an Mailer account yet.\n\nSign up at ${config.baseUrl} and tap "Connect WhatsApp" — it opens this chat with your personal link ready to send.`);
     }
 
     const opts = lastOptions.get(from) || [];

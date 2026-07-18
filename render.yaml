@@ -43,3 +43,13 @@ services:
         sync: false
       - key: FORWARD_MAIL_PASSWORD
         sync: false
+      - key: MONAD_RPC_URL
+        value: https://rpc.monad.xyz
+      - key: MONAD_CHAIN_ID
+        value: 143
+      - key: MONAD_WALLET_KEY
+        sync: false
+      - key: MAILER_LOG_CONTRACT_ADDRESS
+        sync: false
+      - key: MONAD_EXPLORER_URL
+        value: https://monadscan.com

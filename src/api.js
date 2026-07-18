@@ -3,9 +3,27 @@ import { OAuth2Client } from "google-auth-library";
 import { config } from "./config.js";
 import * as db from "./db.js";
 import { hashPassword, verifyPassword, signSession, verifySession, encrypt, randomCode } from "./crypto.js";
-import { testImap, fetchNewEmailsFor, sendReplyFor } from "./mailer.js";
-import { processIncoming } from "./engine.js";
-import { extractFields, draftReply, fillTemplate, interpretCommand } from "./ai.js";
+import { testImap, fetchNewEmailsFor } from "./mailer.js";
+import { processIncoming, approveChainLog, applyAssistantAction } from "./engine.js";
+import { extractFields, draftReply, fillTemplate, interpretCommand, craftMail } from "./ai.js";
+import {
+  isConfigured as chainConfigured, buildAutoSignMessage, verifyAutoSignSignature, submitLog,
+  EVENT_STATUS, hashEmail, buildLogStatusCalldata, recordExternalTx,
+} from "./chain.js";
+
+/* creates the chain_logs row for a done/blacklist action — if the user has granted
+   auto-sign permission (see /wallet/auto-sign), submits immediately with no prompt;
+   otherwise leaves it pending for the dashboard's Sign & Approve chip. Marking the
+   email done / blacklisting the sender only actually applies once that transaction
+   is confirmed on-chain (src/chain.js's applyConfirmedAction) — not here. */
+async function logChainAction(user, emailId, eventType) {
+  const autoSign = !!user.chain_auto_sign;
+  const logId = await db.createChainLog(user.id, emailId, eventType, autoSign ? "submitting" : "pending_approval");
+  if (autoSign) {
+    submitLog(logId, { userId: user.id, emailId, eventType, onBehalfOfAddress: user.wallet_address || null });
+  }
+  return logId;
+}
 
 const googleClient = config.googleClientId ? new OAuth2Client(config.googleClientId) : null;
 
@@ -100,6 +118,8 @@ export function apiRouter() {
       whatsappEnabled: config.twilio.enabled,
       muteStart: u.mute_start,
       muteEnd: u.mute_end,
+      walletAddress: u.wallet_address || null,
+      autoSignEnabled: !!u.chain_auto_sign,
     });
   });
 
@@ -222,8 +242,9 @@ export function apiRouter() {
     const email = await db.emailById(req.params.id);
     if (!email || email.userId !== req.user.id) return res.status(404).json({ error: "Email not found." });
     if (!email.fromAddr) return res.status(400).json({ error: "This email has no sender address to blacklist." });
-    await db.addBlacklist(req.user.id, email.fromAddr.toLowerCase());
-    res.json({ ok: true, address: email.fromAddr.toLowerCase() });
+    // only actually blocked once the on-chain log is signed and confirmed — see logChainAction
+    const chainLogId = await logChainAction(req.user, email.id, "blocked");
+    res.json({ ok: true, address: email.fromAddr.toLowerCase(), chainLogId });
   });
 
   /* ---------- custom data tables (merchant-defined extraction folders) ---------- */
@@ -317,6 +338,17 @@ export function apiRouter() {
   /* ---------- recent emails (dashboard view) ---------- */
   r.get("/emails", auth, async (req, res) => res.json(await db.recentEmailsFor(req.user.id, 50)));
 
+  /* ---------- new mail since last dashboard visit (notification bell) ----------
+     Reads the stored marker BEFORE overwriting it, so "since last visit" means
+     exactly that — each load resets the marker for the next one. First-ever visit
+     (no marker yet) reports nothing rather than dumping the whole inbox as "new". */
+  r.get("/notifications/new-mail", auth, async (req, res) => {
+    const since = Number(req.user.last_dashboard_visit) || 0;
+    const fresh = since ? await db.emailsSince(req.user.id, since) : [];
+    await db.setLastDashboardVisit(req.user.id, Date.now());
+    res.json({ emails: fresh.map((e) => ({ id: e.id, from: e.from, subject: e.subject, summary: e.summary, priority: e.priority })) });
+  });
+
   /* ---------- force an immediate inbox check (dashboard refresh button) ---------- */
   r.post("/emails/refresh", auth, async (req, res) => {
     if (!req.user.mail_user) return res.status(400).json({ error: "Connect your inbox first." });
@@ -335,8 +367,9 @@ export function apiRouter() {
     if (!email || email.userId !== req.user.id) return res.status(404).json({ error: "Email not found." });
     const instruction = (req.body?.instruction || "").trim();
     if (!instruction) return res.status(400).json({ error: "Tell me what you want the reply to say." });
+    const relationship = (req.body?.relationship || "other").trim();
     try {
-      const draft = await draftReply(email, instruction);
+      const draft = await draftReply(email, instruction, relationship);
       res.json({ draft });
     } catch (e) {
       res.status(500).json({ error: "Drafting failed: " + e.message });
@@ -356,20 +389,30 @@ export function apiRouter() {
     }
   });
 
-  r.post("/emails/:id/send", auth, async (req, res) => {
-    const email = await db.emailById(req.params.id);
-    if (!email || email.userId !== req.user.id) return res.status(404).json({ error: "Email not found." });
-    const body = (req.body?.body || "").trim();
-    if (!body) return res.status(400).json({ error: "Reply can't be empty." });
-    if (!req.user.mail_user) return res.status(400).json({ error: "Connect your inbox first." });
+  /* ---------- Mail Format tab: craft a standalone email from scratch (not tied
+     to any inbox email — a real from-scratch composer, dashboard sidebar) ---------- */
+  r.post("/compose", auth, async (req, res) => {
+    const instruction = (req.body?.instruction || "").trim();
+    if (!instruction) return res.status(400).json({ error: "Tell me what the email needs to say." });
+    const format = (req.body?.format || "formal").trim();
+    const recipient = (req.body?.recipient || "").trim().slice(0, 200);
     try {
-      await sendReplyFor(req.user, email, body);
-      await db.updateEmail(email.id, { sentReply: body, status: "done" });
-      await db.addAwaiting(req.user.id, email.fromAddr || email.from, email.subject);
-      res.json({ ok: true });
+      const draft = await craftMail({ format, recipient, instruction });
+      res.json({ draft });
     } catch (e) {
-      res.status(500).json({ error: "Send failed: " + e.message });
+      res.status(500).json({ error: "Crafting failed: " + e.message });
     }
+  });
+
+  // outbound SMTP is blocked on this host (confirmed by direct test — Railway blocks
+  // ports 465/587/25 entirely) and Resend was removed; sending is on hold until the
+  // Gmail-send-API path clears Google's app verification. Fails clearly here instead
+  // of letting sendReplyFor time out with a raw SMTP error — the dashboard/Telegram
+  // "Send" actions are disabled client-side, but this is the server-side backstop.
+  r.post("/emails/:id/send", auth, async (req, res) => {
+    res.status(503).json({
+      error: "Sending is temporarily unavailable — outbound mail is awaiting Gmail auth approval. Copy the draft and send it yourself for now.",
+    });
   });
 
   /* ---------- finish / reopen (dashboard: no mail left behind) ---------- */
@@ -377,8 +420,97 @@ export function apiRouter() {
     const email = await db.emailById(req.params.id);
     if (!email || email.userId !== req.user.id) return res.status(404).json({ error: "Email not found." });
     const done = req.body?.done !== false;
-    await db.updateEmail(email.id, { status: done ? "done" : "new" });
-    res.json({ ok: true, status: done ? "done" : "new" });
+    if (!done) {
+      // reopening is a simple local unmark — no signature needed, unlike marking done
+      await db.updateEmail(email.id, { status: "new" });
+      return res.json({ ok: true, status: "new", chainLogId: null });
+    }
+    // marking done only actually applies once the on-chain log is signed and confirmed
+    const chainLogId = await logChainAction(req.user, email.id, "handled");
+    res.json({ ok: true, status: email.status, chainLogId });
+  });
+
+  /* ---------- on-chain status log approval (Monad) ---------- */
+  r.get("/chain/status", auth, (req, res) => {
+    res.json({
+      configured: chainConfigured(),
+      chainId: config.monad.chainId,
+      rpcUrl: config.monad.rpcUrl,
+      contractAddress: config.monad.contractAddress || null,
+      explorerUrl: config.monad.explorerUrl,
+      walletAddress: req.user.wallet_address || null,
+    });
+  });
+  /* poll target — dashboard watches a pending log until it's confirmed/failed,
+     since that's the moment the email actually gets marked done / sender blocked */
+  r.get("/chain/:logId", auth, async (req, res) => {
+    const log = await db.chainLogById(Number(req.params.logId));
+    if (!log || log.userId !== req.user.id) return res.status(404).json({ error: "Log request not found." });
+    res.json(log);
+  });
+  r.post("/chain/:logId/approve", auth, async (req, res) => {
+    const log = await db.chainLogById(Number(req.params.logId));
+    if (!log || log.userId !== req.user.id) return res.status(404).json({ error: "Log request not found." });
+    await approveChainLog(req.user, log.id);
+    res.json(await db.chainLogById(log.id));
+  });
+
+  /* ---------- manual approval, signed directly by the user's own connected wallet
+     (not Mailer's server wallet) — dashboard only, Telegram has no browser to pop a
+     wallet in and always uses /chain/:logId/approve above instead. ---------- */
+  r.get("/chain/:logId/tx-params", auth, async (req, res) => {
+    const log = await db.chainLogById(Number(req.params.logId));
+    if (!log || log.userId !== req.user.id) return res.status(404).json({ error: "Log request not found." });
+    if (!req.user.wallet_address) return res.status(400).json({ error: "Connect a wallet first." });
+    if (!chainConfigured()) return res.status(400).json({ error: "On-chain logging isn't configured yet." });
+    const emailHash = hashEmail(log.userId, log.emailId);
+    const status = EVENT_STATUS[log.eventType];
+    const data = buildLogStatusCalldata({ emailHash, status, onBehalfOf: req.user.wallet_address });
+    res.json({ to: config.monad.contractAddress, data, chainId: config.monad.chainId });
+  });
+  r.post("/chain/:logId/submitted", auth, async (req, res) => {
+    const log = await db.chainLogById(Number(req.params.logId));
+    if (!log || log.userId !== req.user.id) return res.status(404).json({ error: "Log request not found." });
+    if (!req.user.wallet_address) return res.status(400).json({ error: "Connect a wallet first." });
+    const txHash = (req.body?.txHash || "").trim();
+    if (!txHash) return res.status(400).json({ error: "Missing transaction hash." });
+    const emailHash = hashEmail(log.userId, log.emailId);
+    const status = EVENT_STATUS[log.eventType];
+    const ok = await recordExternalTx(log.id, {
+      txHash, expectedFrom: req.user.wallet_address,
+      emailHash, status, onBehalfOf: req.user.wallet_address,
+    });
+    if (!ok) return res.status(400).json({ error: "Couldn't verify that transaction against this log entry." });
+    res.json(await db.chainLogById(log.id));
+  });
+
+  /* ---------- connect wallet (display/identity only — never signs anything) ---------- */
+  r.post("/wallet", auth, async (req, res) => {
+    const address = (req.body?.address || "").trim();
+    if (!/^0x[a-fA-F0-9]{40}$/.test(address)) return res.status(400).json({ error: "Not a valid EVM address." });
+    await db.setWalletAddress(req.user.id, address);
+    res.json({ ok: true, address });
+  });
+
+  /* ---------- auto-sign: one wallet-signed permission that skips the manual
+     approve/skip step going forward (server wallet still does the actual on-chain
+     signing — see src/chain.js for why a plain EOA can't do that itself) ---------- */
+  r.get("/wallet/auto-sign/message", auth, (req, res) => {
+    if (!req.user.wallet_address) return res.status(400).json({ error: "Connect a wallet first." });
+    res.json({ message: buildAutoSignMessage(req.user.wallet_address) });
+  });
+  r.post("/wallet/auto-sign", auth, async (req, res) => {
+    if (!req.user.wallet_address) return res.status(400).json({ error: "Connect a wallet first." });
+    const signature = (req.body?.signature || "").trim();
+    if (!signature) return res.status(400).json({ error: "Missing signature." });
+    const valid = await verifyAutoSignSignature(req.user.wallet_address, signature);
+    if (!valid) return res.status(400).json({ error: "Signature doesn't match your connected wallet." });
+    await db.setChainAutoSign(req.user.id, { enabled: true, signature, grantedAt: Date.now() });
+    res.json({ ok: true, autoSignEnabled: true });
+  });
+  r.post("/wallet/auto-sign/revoke", auth, async (req, res) => {
+    await db.setChainAutoSign(req.user.id, { enabled: false });
+    res.json({ ok: true, autoSignEnabled: false });
   });
 
   /* ---------- reminder / alarm (dashboard equivalent of the Telegram snooze buttons) ---------- */
@@ -398,7 +530,10 @@ export function apiRouter() {
     res.json({ ok: true, snoozedUntil: until });
   });
 
-  /* ---------- AI voice/text assistant (bottom-left dashboard widget) ---------- */
+  /* ---------- AI voice/text assistant (bottom-left dashboard widget) ----------
+     Mutation actions (add_rule/add_category/create_folder/add_template/add_business)
+     are executed by the shared engine.js applyAssistantAction — same logic the
+     Telegram bot's free-form chat uses, so behavior matches on both channels. ---------- */
   r.post("/assistant", auth, async (req, res) => {
     const text = (req.body?.text || "").trim();
     if (!text) return res.status(400).json({ error: "Say or type a command." });
@@ -409,64 +544,9 @@ export function apiRouter() {
       return res.status(500).json({ error: "Assistant failed: " + e.message });
     }
     try {
-      switch (result.action) {
-        case "add_rule": {
-          const type = result.type, level = result.level, value = String(result.value || "").trim();
-          if (["sender", "domain", "keyword"].includes(type) && ["high", "low"].includes(level) && value) {
-            await db.addRule(req.user.id, type, value, level);
-          } else {
-            result = { action: "unknown", message: "I wasn't sure how to set that rule up — try 'mark emails containing invoice as high priority'." };
-          }
-          break;
-        }
-        case "add_category": {
-          const name = String(result.name || "").trim().slice(0, 30);
-          if (name) {
-            const existing = await db.categoriesFor(req.user.id);
-            if (!existing.some((c) => c.name.toLowerCase() === name.toLowerCase())) {
-              await db.addCategory(req.user.id, name);
-            }
-          } else {
-            result = { action: "unknown", message: "What should the category be called?" };
-          }
-          break;
-        }
-        case "create_folder": {
-          const name = String(result.name || "").trim().slice(0, 40);
-          const fields = Array.isArray(result.fields)
-            ? [...new Set(result.fields.map((f) => String(f || "").trim().slice(0, 40)).filter(Boolean))].slice(0, 12)
-            : [];
-          if (name && fields.length) {
-            await db.createDataTable(req.user.id, name, fields);
-          } else {
-            result = { action: "unknown", message: "Tell me the folder name and which fields to store, e.g. 'create a folder called Invoices with sender, amount, and due date'." };
-          }
-          break;
-        }
-        case "add_template": {
-          const name = String(result.name || "").trim().slice(0, 60);
-          const content = String(result.content || "").trim();
-          if (name && content) {
-            await db.addTemplate(req.user.id, name, content);
-          } else {
-            result = { action: "unknown", message: "Give me a template name and the text to save." };
-          }
-          break;
-        }
-        case "add_business": {
-          const name = String(result.name || "").trim().slice(0, 40);
-          const domain = String(result.domain || "").trim().toLowerCase().replace(/^@/, "").slice(0, 80);
-          if (name && /^[a-z0-9.-]+\.[a-z]{2,}$/.test(domain)) {
-            const existing = await db.businessesFor(req.user.id);
-            if (!existing.some((b) => b.domain === domain)) await db.addBusiness(req.user.id, name, domain);
-          } else {
-            result = { action: "unknown", message: "Tell me the business name and its email domain, e.g. 'add a business called Acme at acme.com'." };
-          }
-          break;
-        }
-        default:
-          break; // view_emails/view_category/view_tier/search/refresh_inbox/unknown are handled client-side
-      }
+      // view_emails/view_category/view_tier/search/refresh_inbox/mute/report/help/unknown
+      // are handled client-side on the dashboard
+      result = await applyAssistantAction(req.user, result);
       res.json(result);
     } catch (e) {
       res.status(500).json({ error: "Couldn't do that: " + e.message });

@@ -3,11 +3,11 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>MAILER — No mail slips.</title>
-<link rel="icon" type="image/x-icon" href="assets/favicon.ico?v=5">
-<link rel="icon" type="image/png" sizes="32x32" href="assets/favicon-32.png?v=5">
-<link rel="icon" type="image/png" sizes="192x192" href="assets/favicon-192.png?v=5">
-<link rel="apple-touch-icon" href="assets/apple-touch-icon.png?v=5">
+<title>Mailer — No mail slips.</title>
+<link rel="icon" type="image/x-icon" href="assets/favicon.ico?v=7">
+<link rel="icon" type="image/png" sizes="32x32" href="assets/favicon-32.png?v=7">
+<link rel="icon" type="image/png" sizes="192x192" href="assets/favicon-192.png?v=7">
+<link rel="apple-touch-icon" href="assets/apple-touch-icon.png?v=7">
 <link rel="preconnect" href="https://api.fontshare.com">
 <link href="https://api.fontshare.com/v2/css?f[]=satoshi@400,500,700,900&display=swap" rel="stylesheet">
 <style>
@@ -15,7 +15,7 @@
 :root{
   --ink:#000000;--ink-2:#0B0B0B;--ink-3:#141414;--line:#242424;--line-2:#333333;
   --paper:#F7F5F1;--muted:#8C8C8C;--muted-2:#5C5C5C;
-  --amber:#FF6B2C;--amber-2:#ff8a52;--amber-soft:#2B180D;--teal:#39B27D;--teal-soft:#0F2119;
+  --violet:#8B5CF6;--violet-2:#A78BFA;--violet-soft:#241B3D;--teal:#39B27D;--teal-soft:#0F2119;
   --red:#E5645C;--radius:14px;
 }
 *{box-sizing:border-box;margin:0;padding:0}
@@ -31,8 +31,8 @@ body::before{content:"";position:fixed;inset:0;z-index:-2;pointer-events:none;
   -webkit-mask-image:radial-gradient(ellipse 80% 60% at 50% 0%,#000 0%,transparent 78%);
   mask-image:radial-gradient(ellipse 80% 60% at 50% 0%,#000 0%,transparent 78%)}
 body::after{content:"";position:fixed;inset:0;z-index:-2;pointer-events:none;
-  background:radial-gradient(circle at 78% 8%,rgba(255,107,44,.10),transparent 42%),
-             radial-gradient(circle at 6% 30%,rgba(255,107,44,.05),transparent 40%)}
+  background:radial-gradient(circle at 78% 8%,rgba(139,92,246,.10),transparent 42%),
+             radial-gradient(circle at 6% 30%,rgba(139,92,246,.05),transparent 40%)}
 .mono{font-family:'JetBrains Mono',monospace;letter-spacing:0}
 a{color:inherit;text-decoration:none}
 /* scroll reveal */
@@ -50,14 +50,14 @@ a{color:inherit;text-decoration:none}
 nav{position:sticky;top:0;z-index:50;background:rgba(0,0,0,.7);backdrop-filter:blur(20px) saturate(1.3);border-bottom:1px solid var(--line)}
 .nav-inner{display:flex;align-items:center;gap:14px;height:72px}
 .brand{display:flex;align-items:center;gap:11px;font-weight:900;font-size:20px;letter-spacing:.04em}
-.logo{width:40px;height:40px;flex-shrink:0;display:grid;place-items:center;border-radius:11px;overflow:hidden;background:#0a0a0a;border:1px solid rgba(255,107,44,.24);box-shadow:0 6px 18px -6px rgba(232,90,27,.55)}
+.logo{width:40px;height:40px;flex-shrink:0;display:grid;place-items:center;border-radius:11px;overflow:hidden;background:#0a0a0a;border:1px solid rgba(139,92,246,.24);box-shadow:0 6px 18px -6px rgba(109,40,217,.55)}
 .logo img{width:100%;height:100%;object-fit:cover;display:block;transform:scale(1.06)}
 .nav-links{margin-left:auto;display:flex;align-items:center;gap:34px}
 .nav-links a{color:var(--muted);font-size:14.5px;font-weight:500;transition:color .2s}
 .nav-links a:hover{color:var(--paper)}
 .btn{display:inline-flex;align-items:center;gap:9px;font-weight:700;font-size:14.5px;padding:12px 24px;border-radius:999px;border:1px solid transparent;cursor:pointer;transition:transform .2s,box-shadow .2s,background .2s,border-color .2s;white-space:nowrap;letter-spacing:0}
-.btn-primary{background:linear-gradient(180deg,var(--amber-2),var(--amber));color:#0A0500;box-shadow:0 8px 26px -10px rgba(255,107,44,.7)}
-.btn-primary:hover{transform:translateY(-2px);box-shadow:0 16px 34px -12px rgba(255,107,44,.85)}
+.btn-primary{background:linear-gradient(180deg,var(--violet-2),var(--violet));color:#fff;box-shadow:0 8px 26px -10px rgba(139,92,246,.7)}
+.btn-primary:hover{transform:translateY(-2px);box-shadow:0 16px 34px -12px rgba(139,92,246,.85)}
 .btn-ghost{background:rgba(255,255,255,.02);border-color:var(--line-2);color:var(--paper)}
 .btn-ghost:hover{border-color:var(--muted);background:rgba(255,255,255,.05)}
 @media(max-width:720px){.nav-links a:not(.btn){display:none}}
@@ -66,11 +66,11 @@ nav{position:sticky;top:0;z-index:50;background:rgba(0,0,0,.7);backdrop-filter:b
 .hero{position:relative;padding:96px 0 84px;overflow:hidden}
 .hero-grid{display:grid;grid-template-columns:1.05fr .95fr;gap:48px;align-items:center}
 @media(max-width:920px){.hero-grid{grid-template-columns:1fr;gap:60px}}
-.eyebrow{display:inline-flex;align-items:center;gap:9px;font-family:'JetBrains Mono';font-size:11.5px;letter-spacing:.13em;text-transform:uppercase;color:var(--amber);border:1px solid rgba(255,107,44,.24);background:rgba(255,107,44,.06);padding:7px 14px;border-radius:99px;margin-bottom:28px}
-.eyebrow .dot{width:6px;height:6px;border-radius:50%;background:var(--amber);box-shadow:0 0 10px var(--amber);animation:pulse 2.4s ease-in-out infinite}
+.eyebrow{display:inline-flex;align-items:center;gap:9px;font-family:'JetBrains Mono';font-size:11.5px;letter-spacing:.13em;text-transform:uppercase;color:var(--violet);border:1px solid rgba(139,92,246,.24);background:rgba(139,92,246,.06);padding:7px 14px;border-radius:99px;margin-bottom:28px}
+.eyebrow .dot{width:6px;height:6px;border-radius:50%;background:var(--violet);box-shadow:0 0 10px var(--violet);animation:pulse 2.4s ease-in-out infinite}
 @keyframes pulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.5;transform:scale(.7)}}
 h1{font-weight:900;font-size:clamp(46px,6.4vw,80px);line-height:.98;letter-spacing:-.045em}
-h1 .amber{background:linear-gradient(120deg,var(--amber-2),var(--amber));-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent}
+h1 .violet{background:linear-gradient(120deg,var(--violet-2),var(--violet));-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent}
 .lede{color:var(--muted);font-size:18px;margin-top:26px;max-width:520px;line-height:1.66}
 .lede b{color:var(--paper);font-weight:600}
 .hero-cta{display:flex;gap:14px;margin-top:36px;flex-wrap:wrap}
@@ -82,7 +82,7 @@ h1 .amber{background:linear-gradient(120deg,var(--amber-2),var(--amber));-webkit
 .scene{position:relative;width:min(360px,88vw);height:320px;transform-style:preserve-3d;animation:floaty 6.5s ease-in-out infinite}
 @keyframes floaty{0%,100%{transform:translateY(0) rotateX(4deg)}50%{transform:translateY(-16px) rotateX(1deg)}}
 @media(prefers-reduced-motion:reduce){.scene{animation:none}.flap{transform:rotateX(-158deg)!important}.letter{transform:translateX(-50%) translateY(-96px)!important}}
-.halo{position:absolute;left:50%;top:44%;width:360px;height:360px;transform:translate(-50%,-50%);background:radial-gradient(circle,rgba(255,107,44,.22),transparent 62%);filter:blur(20px);z-index:-1;animation:haloPulse 6.5s ease-in-out infinite}
+.halo{position:absolute;left:50%;top:44%;width:360px;height:360px;transform:translate(-50%,-50%);background:radial-gradient(circle,rgba(139,92,246,.22),transparent 62%);filter:blur(20px);z-index:-1;animation:haloPulse 6.5s ease-in-out infinite}
 @keyframes haloPulse{0%,100%{opacity:.55}50%{opacity:.9}}
 .scene-shadow{position:absolute;left:14%;right:14%;bottom:-6px;height:30px;background:radial-gradient(ellipse,rgba(0,0,0,.6),transparent 70%);filter:blur(8px)}
 
@@ -95,17 +95,17 @@ h1 .amber{background:linear-gradient(120deg,var(--amber-2),var(--amber));-webkit
 @keyframes riseLetter{0%{transform:translateX(-50%) translateY(78px);opacity:.4}100%{transform:translateX(-50%) translateY(-96px);opacity:1}}
 @keyframes letterBreathe{0%,100%{transform:translateX(-50%) translateY(-96px)}50%{transform:translateX(-50%) translateY(-104px)}}
 .lt-head{display:flex;align-items:center;gap:9px}
-.lt-avatar{width:30px;height:30px;border-radius:8px;overflow:hidden;background:#0a0a0a;flex-shrink:0;border:1px solid rgba(255,107,44,.3)}
+.lt-avatar{width:30px;height:30px;border-radius:8px;overflow:hidden;background:#0a0a0a;flex-shrink:0;border:1px solid rgba(139,92,246,.3)}
 .lt-avatar img{width:100%;height:100%;object-fit:cover;transform:scale(1.06)}
 .lt-from{flex:1;min-width:0}
 .lt-name{height:8px;width:70%;border-radius:4px;background:#2a2a2a}
 .lt-sub{height:6px;width:46%;border-radius:4px;background:#d9d1c4;margin-top:5px}
-.lt-tag{font-family:'JetBrains Mono';font-size:8.5px;font-weight:700;letter-spacing:.06em;color:#fff;background:linear-gradient(180deg,var(--amber-2),var(--amber));padding:3px 7px;border-radius:5px;flex-shrink:0}
+.lt-tag{font-family:'JetBrains Mono';font-size:8.5px;font-weight:700;letter-spacing:.06em;color:#fff;background:linear-gradient(180deg,var(--violet-2),var(--violet));padding:3px 7px;border-radius:5px;flex-shrink:0}
 .lt-divider{height:1px;background:#E4DDD3;margin:2px 0}
 .lt-ln{height:7px;border-radius:4px;background:#EAE3D8}
 .lt-ln.w1{width:96%}.lt-ln.w2{width:88%}.lt-ln.w3{width:92%}.lt-ln.w4{width:64%}
 .lt-foot{margin-top:auto;display:flex;align-items:center;justify-content:space-between}
-.lt-amt{font-family:'JetBrains Mono';font-size:10.5px;font-weight:700;color:#C4501C;letter-spacing:.03em}
+.lt-amt{font-family:'JetBrains Mono';font-size:10.5px;font-weight:700;color:#6D28D9;letter-spacing:.03em}
 .lt-check{width:20px;height:20px;border-radius:50%;background:var(--teal);display:grid;place-items:center}
 .lt-check svg{width:11px;height:11px;stroke:#fff;stroke-width:3;fill:none}
 
@@ -113,14 +113,14 @@ h1 .amber{background:linear-gradient(120deg,var(--amber-2),var(--amber));-webkit
 .env{position:absolute;left:0;right:0;bottom:20px;height:176px;transform-style:preserve-3d;z-index:1}
 .env-back{position:absolute;inset:0;background:linear-gradient(165deg,#1E1E1E 0%,#0E0E0E 100%);border:1px solid #333;border-radius:12px;box-shadow:0 30px 56px -20px rgba(0,0,0,.8)}
 .env-front{position:absolute;left:0;right:0;bottom:0;height:60%;z-index:5;background:linear-gradient(180deg,#1E1E1E 0%,#121212 100%);border:1px solid #383838;border-top:none;border-radius:0 0 12px 12px;clip-path:polygon(0 30%,50% 0,100% 30%,100% 100%,0 100%)}
-.env-front::after{content:"";position:absolute;inset:0;background:linear-gradient(180deg,rgba(255,107,44,.05),transparent 40%);clip-path:inherit}
+.env-front::after{content:"";position:absolute;inset:0;background:linear-gradient(180deg,rgba(139,92,246,.05),transparent 40%);clip-path:inherit}
 .flap{position:absolute;left:0;right:0;top:0;height:60%;transform-origin:50% 0;transform:rotateX(-158deg);z-index:1;
   animation:openFlap 1.7s cubic-bezier(.5,.05,.2,1) .2s both}
 @keyframes openFlap{0%{transform:rotateX(6deg)}55%{transform:rotateX(-170deg)}100%{transform:rotateX(-158deg)}}
 .flap svg{width:100%;height:100%;display:block}
-.env-badge{position:absolute;right:16px;bottom:15px;z-index:6;font-family:'JetBrains Mono';font-size:8.5px;letter-spacing:.15em;text-transform:uppercase;color:rgba(255,107,44,.9);background:rgba(255,107,44,.09);border:1px solid rgba(255,107,44,.24);padding:4px 8px;border-radius:5px}
+.env-badge{position:absolute;right:16px;bottom:15px;z-index:6;font-family:'JetBrains Mono';font-size:8.5px;letter-spacing:.15em;text-transform:uppercase;color:rgba(139,92,246,.9);background:rgba(139,92,246,.09);border:1px solid rgba(139,92,246,.24);padding:4px 8px;border-radius:5px}
 .slips{position:absolute;left:50%;bottom:-4px;transform:translateX(-50%);z-index:7;font-family:'JetBrains Mono';font-size:9px;letter-spacing:.24em;text-transform:uppercase;color:var(--muted-2);white-space:nowrap}
-.slips b{color:var(--amber)}
+.slips b{color:var(--violet)}
 
 /* —— stats strip —— */
 .strip{border-top:1px solid var(--line);border-bottom:1px solid var(--line);background:rgba(11,11,11,.5);backdrop-filter:blur(16px) saturate(1.2)}
@@ -128,15 +128,15 @@ h1 .amber{background:linear-gradient(120deg,var(--amber-2),var(--amber));-webkit
 .stat{flex:1;min-width:150px;display:flex;flex-direction:column;gap:6px;padding:26px 26px;border-right:1px solid var(--line)}
 .stat:last-child{border-right:none}
 .stat .n{font-weight:900;font-size:27px;letter-spacing:-.02em}
-.stat .n .amber{color:var(--amber)}
+.stat .n .violet{color:var(--violet)}
 .stat .l{font-family:'JetBrains Mono';font-size:10.5px;letter-spacing:.1em;text-transform:uppercase;color:var(--muted-2)}
 
 /* —— sections —— */
 section{padding:96px 0}
 .sec-head{max-width:660px;margin-bottom:54px}
-.sec-eyebrow{font-family:'JetBrains Mono';font-size:12px;letter-spacing:.17em;text-transform:uppercase;color:var(--amber);margin-bottom:17px}
+.sec-eyebrow{font-family:'JetBrains Mono';font-size:12px;letter-spacing:.17em;text-transform:uppercase;color:var(--violet);margin-bottom:17px}
 h2{font-weight:900;font-size:clamp(30px,4vw,46px);letter-spacing:-.035em;line-height:1.06}
-h2 .amber{color:var(--amber)}
+h2 .violet{color:var(--violet)}
 .sec-head p{color:var(--muted);font-size:17px;margin-top:16px;line-height:1.6}
 
 /* —— six principles —— */
@@ -144,36 +144,36 @@ h2 .amber{color:var(--amber)}
 @media(max-width:900px){.principles{grid-template-columns:repeat(2,1fr)}}
 @media(max-width:600px){.principles{grid-template-columns:1fr}}
 .prin{position:relative;background:linear-gradient(180deg,rgba(30,30,30,.5),rgba(11,11,11,.4));backdrop-filter:blur(16px) saturate(1.15);border:1px solid rgba(255,255,255,.07);border-radius:var(--radius);padding:28px;transition:transform .3s cubic-bezier(.2,.7,.2,1),border-color .3s,box-shadow .3s;overflow:hidden;box-shadow:0 1px 0 rgba(255,255,255,.05) inset,0 20px 40px -30px rgba(0,0,0,.8)}
-.prin::before{content:"";position:absolute;inset:0;border-radius:inherit;padding:1px;background:linear-gradient(140deg,rgba(255,107,44,.55),transparent 42%);-webkit-mask:linear-gradient(#000 0 0) content-box,linear-gradient(#000 0 0);-webkit-mask-composite:xor;mask-composite:exclude;opacity:0;transition:opacity .3s}
+.prin::before{content:"";position:absolute;inset:0;border-radius:inherit;padding:1px;background:linear-gradient(140deg,rgba(139,92,246,.55),transparent 42%);-webkit-mask:linear-gradient(#000 0 0) content-box,linear-gradient(#000 0 0);-webkit-mask-composite:xor;mask-composite:exclude;opacity:0;transition:opacity .3s}
 .prin::after{content:"";position:absolute;top:0;left:12%;right:12%;height:1px;background:linear-gradient(90deg,transparent,rgba(255,255,255,.18),transparent)}
-.prin:hover{transform:translateY(-6px);border-color:rgba(255,107,44,.3);box-shadow:0 30px 60px -30px rgba(255,107,44,.45),0 1px 0 rgba(255,255,255,.08) inset}
+.prin:hover{transform:translateY(-6px);border-color:rgba(139,92,246,.3);box-shadow:0 30px 60px -30px rgba(139,92,246,.45),0 1px 0 rgba(255,255,255,.08) inset}
 .prin:hover::before{opacity:1}
 .prin-ic{width:46px;height:46px;border-radius:12px;background:linear-gradient(160deg,var(--ink-3),#0c0c0c);border:1px solid var(--line-2);display:grid;place-items:center;margin-bottom:18px}
-.prin-ic svg{width:22px;height:22px;stroke:var(--amber);stroke-width:1.8;fill:none;stroke-linecap:round;stroke-linejoin:round}
+.prin-ic svg{width:22px;height:22px;stroke:var(--violet);stroke-width:1.8;fill:none;stroke-linecap:round;stroke-linejoin:round}
 .prin h3{font-weight:700;font-size:17.5px;margin-bottom:9px;letter-spacing:-.01em}
 .prin p{color:var(--muted);font-size:14.5px;line-height:1.6}
 .prin .idx{position:absolute;top:24px;right:26px;font-family:'JetBrains Mono';font-size:12px;color:var(--muted-2)}
 
 /* —— motto band —— */
 .motto{border-top:1px solid var(--line);border-bottom:1px solid var(--line);background:linear-gradient(180deg,#0c0806,var(--ink) 60%);text-align:center;padding:82px 0;position:relative;overflow:hidden}
-.motto .glow-line{position:absolute;left:50%;top:0;width:70%;height:1px;transform:translateX(-50%);background:linear-gradient(90deg,transparent,rgba(255,107,44,.6),transparent)}
+.motto .glow-line{position:absolute;left:50%;top:0;width:70%;height:1px;transform:translateX(-50%);background:linear-gradient(90deg,transparent,rgba(139,92,246,.6),transparent)}
 .motto .tag{font-family:'JetBrains Mono';font-size:12px;letter-spacing:.2em;text-transform:uppercase;color:var(--muted-2);margin-bottom:20px}
 .motto h2{font-size:clamp(38px,7vw,88px);letter-spacing:-.05em;line-height:.95}
-.motto h2 .amber{background:linear-gradient(120deg,var(--amber-2),var(--amber));-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent}
+.motto h2 .violet{background:linear-gradient(120deg,var(--violet-2),var(--violet));-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent}
 .motto p{color:var(--muted);font-size:16px;margin-top:22px;max-width:440px;margin-left:auto;margin-right:auto}
 
 /* —— how it reads —— */
 .views{display:grid;grid-template-columns:repeat(3,1fr);gap:16px}
 @media(max-width:800px){.views{grid-template-columns:1fr}}
 .view{position:relative;background:linear-gradient(180deg,rgba(20,20,20,.5),rgba(0,0,0,.4));backdrop-filter:blur(14px);border:1px solid rgba(255,255,255,.06);border-radius:var(--radius);padding:26px;transition:border-color .25s,transform .25s,box-shadow .25s;box-shadow:0 1px 0 rgba(255,255,255,.04) inset}
-.view:hover{border-color:rgba(255,107,44,.22);transform:translateY(-4px);box-shadow:0 24px 46px -30px rgba(255,107,44,.35)}
-.view-tab{display:inline-block;font-family:'JetBrains Mono';font-size:10.5px;letter-spacing:.1em;text-transform:uppercase;color:var(--amber);border:1px solid rgba(255,107,44,.22);background:rgba(255,107,44,.05);padding:4px 10px;border-radius:6px;margin-bottom:17px}
+.view:hover{border-color:rgba(139,92,246,.22);transform:translateY(-4px);box-shadow:0 24px 46px -30px rgba(139,92,246,.35)}
+.view-tab{display:inline-block;font-family:'JetBrains Mono';font-size:10.5px;letter-spacing:.1em;text-transform:uppercase;color:var(--violet);border:1px solid rgba(139,92,246,.22);background:rgba(139,92,246,.05);padding:4px 10px;border-radius:6px;margin-bottom:17px}
 .view h3{font-weight:700;font-size:17px;margin-bottom:8px}
 .view p{color:var(--muted);font-size:14px;line-height:1.6}
 
 /* —— CTA —— */
 .cta-band{background:linear-gradient(155deg,#181818 0%,#0B0B0B 52%,#1c130c 100%);border:1px solid var(--line);border-radius:22px;padding:60px;text-align:center;position:relative;overflow:hidden;box-shadow:0 0 0 1px rgba(255,255,255,.02) inset}
-.cta-band .glow-c{position:absolute;width:340px;height:340px;border-radius:50%;filter:blur(90px);background:rgba(255,107,44,.3);right:8%;bottom:-70px;pointer-events:none}
+.cta-band .glow-c{position:absolute;width:340px;height:340px;border-radius:50%;filter:blur(90px);background:rgba(139,92,246,.3);right:8%;bottom:-70px;pointer-events:none}
 .cta-band h2{margin-bottom:15px;position:relative}
 .cta-band p{color:var(--muted);max-width:480px;margin:0 auto 32px;font-size:17px;line-height:1.6;position:relative}
 footer{border-top:1px solid var(--line);padding:40px 0;color:var(--muted-2);font-size:13.5px}
@@ -186,12 +186,12 @@ footer{border-top:1px solid var(--line);padding:40px 0;color:var(--muted-2);font
 <body>
 <nav>
   <div class="wrap nav-inner">
-    <div class="brand"><span class="logo"><img src="assets/mailer-logo.jpeg?v=5" alt="MAILER" width="40" height="40"></span>MAILER</div>
+    <div class="brand"><span class="logo"><img src="assets/mailer-logo.jpeg?v=7" alt="Mailer" width="40" height="40"></span>Mailer</div>
     <div class="nav-links">
       <a href="#principles">Principles</a>
       <a href="#views">How it reads</a>
       <a href="#cta">Security</a>
-      <a class="btn btn-primary" href="setup.html">Access MAILER →</a>
+      <a class="btn btn-primary" href="setup.html">Access Mailer →</a>
     </div>
   </div>
 </nav>
@@ -200,10 +200,10 @@ footer{border-top:1px solid var(--line);padding:40px 0;color:var(--muted-2);font
   <div class="wrap hero-grid">
     <div class="hero-copy">
       <span class="eyebrow"><span class="dot"></span>Inbox intelligence for operators</span>
-      <h1>No mail<br><span class="amber">slips.</span></h1>
-      <p class="lede">MAILER reads every business email, ranks what touches money and deadlines, flags the scams, and delivers it to WhatsApp and Telegram — summarized and ready to answer. <b>Nothing gets left behind.</b></p>
+      <h1>No mail<br><span class="violet">slips.</span></h1>
+      <p class="lede">Mailer reads every business email, ranks what touches money and deadlines, flags the scams, and delivers it to WhatsApp and Telegram — summarized and ready to answer. <b>Nothing gets left behind.</b></p>
       <div class="hero-cta">
-        <a class="btn btn-primary" href="setup.html">Access MAILER →</a>
+        <a class="btn btn-primary" href="setup.html">Access Mailer →</a>
         <a class="btn btn-ghost" href="#principles">Our six principles</a>
       </div>
       <div class="hero-note"><span class="tick">✓</span> Sign up · connect inbox · chat in under two minutes</div>
@@ -215,7 +215,7 @@ footer{border-top:1px solid var(--line);padding:40px 0;color:var(--muted-2);font
         <!-- the letter rising out -->
         <div class="letter">
           <div class="lt-head">
-            <div class="lt-avatar"><img src="assets/mailer-logo.jpeg?v=5" alt=""></div>
+            <div class="lt-avatar"><img src="assets/mailer-logo.jpeg?v=7" alt=""></div>
             <div class="lt-from"><div class="lt-name"></div><div class="lt-sub"></div></div>
             <div class="lt-tag">HIGH</div>
           </div>
@@ -240,7 +240,7 @@ footer{border-top:1px solid var(--line);padding:40px 0;color:var(--muted-2);font
                 </linearGradient>
               </defs>
               <path d="M2 4 L180 100 L358 4 Z" fill="url(#flapGrad)" stroke="#3A3A3A" stroke-width="1.5" stroke-linejoin="round"/>
-              <path d="M44 16 L180 90 L316 16" fill="none" stroke="rgba(255,107,44,.2)" stroke-width="1.2"/>
+              <path d="M44 16 L180 90 L316 16" fill="none" stroke="rgba(139,92,246,.2)" stroke-width="1.2"/>
             </svg>
           </div>
           <div class="env-front"></div>
@@ -255,10 +255,10 @@ footer{border-top:1px solid var(--line);padding:40px 0;color:var(--muted-2);font
 
 <div class="strip">
   <div class="wrap strip-inner stagger reveal-root">
-    <div class="stat"><span class="n">3<span class="amber">×</span></span><span class="l">Web · Telegram · WhatsApp</span></div>
+    <div class="stat"><span class="n">3<span class="violet">×</span></span><span class="l">Web · Telegram · WhatsApp</span></div>
     <div class="stat"><span class="n">0</span><span class="l">Emails left behind</span></div>
-    <div class="stat"><span class="n">&lt;60<span class="amber">s</span></span><span class="l">Inbox to your chat</span></div>
-    <div class="stat"><span class="n">100<span class="amber">%</span></span><span class="l">Replies you approve first</span></div>
+    <div class="stat"><span class="n">&lt;60<span class="violet">s</span></span><span class="l">Inbox to your chat</span></div>
+    <div class="stat"><span class="n">100<span class="violet">%</span></span><span class="l">Replies you approve first</span></div>
   </div>
 </div>
 
@@ -266,8 +266,8 @@ footer{border-top:1px solid var(--line);padding:40px 0;color:var(--muted-2);font
   <div class="wrap">
     <div class="sec-head reveal">
       <div class="sec-eyebrow">Our working principles</div>
-      <h2>Six principles.<br>One promise: <span class="amber">no mail left behind.</span></h2>
-      <p>Most inbox tools help you read faster. MAILER is built so nothing ever falls through — from the mail that matters to the one you never want to see again.</p>
+      <h2>Six principles.<br>One promise: <span class="violet">no mail left behind.</span></h2>
+      <p>Most inbox tools help you read faster. Mailer is built so nothing ever falls through — from the mail that matters to the one you never want to see again.</p>
     </div>
     <div class="principles stagger reveal-root">
       <div class="prin">
@@ -304,7 +304,7 @@ footer{border-top:1px solid var(--line);padding:40px 0;color:var(--muted-2);font
         <span class="idx mono">06</span>
         <div class="prin-ic"><svg viewBox="0 0 24 24"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.5 21a2 2 0 0 1-3 0"/></svg></div>
         <h3>Silence gets followed up</h3>
-        <p>Replied and heard nothing? MAILER nudges you to chase it. Reminders return exactly when you set them. Even the quiet threads get a second look.</p>
+        <p>Replied and heard nothing? Mailer nudges you to chase it. Reminders return exactly when you set them. Even the quiet threads get a second look.</p>
       </div>
     </div>
   </div>
@@ -314,7 +314,7 @@ footer{border-top:1px solid var(--line);padding:40px 0;color:var(--muted-2);font
   <div class="glow-line"></div>
   <div class="wrap reveal">
     <div class="tag">Our mail motto</div>
-    <h2>No mail<br><span class="amber">left behind.</span></h2>
+    <h2>No mail<br><span class="violet">left behind.</span></h2>
     <p>Not the invoice. Not the complaint. Not the one you meant to answer last Tuesday.</p>
   </div>
 </div>
@@ -324,7 +324,7 @@ footer{border-top:1px solid var(--line);padding:40px 0;color:var(--muted-2);font
     <div class="sec-head reveal">
       <div class="sec-eyebrow">How it reads</div>
       <h2>Three ways to see your inbox.</h2>
-      <p>MAILER organizes your mail the way a business actually thinks — pick the lens that fits the moment.</p>
+      <p>Mailer organizes your mail the way a business actually thinks — pick the lens that fits the moment.</p>
     </div>
     <div class="views stagger reveal-root">
       <div class="view"><span class="view-tab">01 · Emails</span><h3>By date</h3><p>Every email, summarized, newest first — sender, date, and the “so what” at a glance.</p></div>
@@ -339,16 +339,16 @@ footer{border-top:1px solid var(--line);padding:40px 0;color:var(--muted-2);font
     <div class="cta-band reveal">
       <div class="glow-c"></div>
       <div class="sec-eyebrow" style="text-align:center">Ready when you are</div>
-      <h2>Stop checking email.<br>Let MAILER make sure <span class="amber">nothing slips.</span></h2>
+      <h2>Stop checking email.<br>Let Mailer make sure <span class="violet">nothing slips.</span></h2>
       <p>Connect your inbox and your chat in two minutes. Summaries, priorities, scam flags and approved replies — all in WhatsApp or Telegram.</p>
-      <a class="btn btn-primary" href="setup.html" style="font-size:16px;padding:15px 30px">Access MAILER →</a>
+      <a class="btn btn-primary" href="setup.html" style="font-size:16px;padding:15px 30px">Access Mailer →</a>
     </div>
   </div>
 </section>
 
 <footer>
   <div class="wrap foot-inner">
-    <div class="brand" style="font-size:16px"><span class="logo" style="width:28px;height:28px"><img src="assets/mailer-logo.jpeg?v=5" alt="MAILER" width="28" height="28"></span>MAILER</div>
+    <div class="brand" style="font-size:16px"><span class="logo" style="width:28px;height:28px"><img src="assets/mailer-logo.jpeg?v=7" alt="Mailer" width="28" height="28"></span>Mailer</div>
     <div class="foot-links">
       <a href="#principles">Principles</a><a href="#views">How it reads</a><a href="#cta">Security</a><a href="setup.html">Access</a>
     </div>

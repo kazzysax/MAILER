@@ -7,6 +7,21 @@ import * as db from "./db.js";
 
 const uid = () => Math.random().toString(36).slice(2, 12);
 
+// Plain-text-only bodies (below) already carry any URLs verbatim, but when a message
+// is HTML-only, stripping tags for the body text throws the href away entirely — so
+// pull candidate links from the raw HTML source too, before that stripping happens.
+// Capped and deduped; analyzeEmail() only ever picks from this exact list (never
+// invents one), so it's fine if this catches a few irrelevant links too.
+const URL_RE = /https?:\/\/[^\s"'<>\)]+/g;
+function extractLinks(parsed) {
+  const urls = new Set();
+  for (const src of [parsed.text, parsed.html]) {
+    if (!src) continue;
+    for (const m of src.matchAll(URL_RE)) urls.add(m[0].replace(/[.,;:]+$/, ""));
+  }
+  return [...urls].slice(0, 8);
+}
+
 function creds(user) {
   return {
     mailUser: user.mail_user,
@@ -62,6 +77,7 @@ export async function fetchNewEmailsFor(user) {
           fromAddr,
           subject: parsed.subject || "(no subject)",
           body: (parsed.text || "").trim() || (parsed.html ? parsed.html.replace(/<[^>]+>/g, " ").replace(/\s+/g, " ").trim() : ""),
+          links: extractLinks(parsed),
           attachments: (parsed.attachments || []).map((a) => a.filename).filter(Boolean),
           messageId: parsed.messageId || null,
           receivedAt: parsed.date ? parsed.date.getTime() : Date.now(),
@@ -79,7 +95,7 @@ export async function fetchNewEmailsFor(user) {
   return results;
 }
 
-/* ---------- the shared forward-to-MAILER inbox ---------- */
+/* ---------- the shared forward-to-Mailer inbox ---------- */
 export async function fetchForwardInbox() {
   if (!config.forward.enabled) return [];
   const client = new ImapFlow({
@@ -103,7 +119,7 @@ export async function fetchForwardInbox() {
         const parsed = await simpleParser(msg.source);
         const forwarder = parsed.from?.value?.[0]?.address || "";
         const user = await db.userByAnyEmail(forwarder);
-        if (!user) continue; // forwarder isn't an MAILER user — ignore
+        if (!user) continue; // forwarder isn't an Mailer user — ignore
 
         results.push({
           user,
@@ -115,6 +131,7 @@ export async function fetchForwardInbox() {
             fromAddr: forwarder,
             subject: (parsed.subject || "(no subject)").replace(/^(fwd?:)\s*/i, "Fwd: "),
             body: (parsed.text || "").trim() || (parsed.html ? parsed.html.replace(/<[^>]+>/g, " ").replace(/\s+/g, " ").trim() : ""),
+            links: extractLinks(parsed),
             attachments: (parsed.attachments || []).map((a) => a.filename).filter(Boolean),
             messageId: parsed.messageId || null,
             receivedAt: parsed.date ? parsed.date.getTime() : Date.now(),
@@ -136,14 +153,16 @@ export async function fetchForwardInbox() {
 /* ---------- send an approved reply from this user's address ---------- */
 export async function sendReplyFor(user, email, bodyText) {
   const c = creds(user);
+  const subject = /^re:/i.test(email.subject) ? email.subject : `Re: ${email.subject}`;
+  const to = email.fromAddr || email.from;
+
   const transporter = nodemailer.createTransport({
     host: c.smtpHost, port: c.smtpPort, secure: c.smtpPort === 465,
     auth: { user: c.mailUser, pass: c.mailPass },
     connectionTimeout: 15000, // fail fast instead of hanging ~2min on a blocked port
     greetingTimeout: 15000,
   });
-  const subject = /^re:/i.test(email.subject) ? email.subject : `Re: ${email.subject}`;
-  const mail = { from: c.mailUser, to: email.fromAddr || email.from, subject, text: bodyText };
+  const mail = { from: c.mailUser, to, subject, text: bodyText };
   if (email.messageId) {
     mail.inReplyTo = email.messageId;
     mail.references = email.messageId;

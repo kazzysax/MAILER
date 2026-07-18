@@ -9,10 +9,6 @@ import { startTelegramBot } from "./bot.js";
 import { initWhatsApp } from "./whatsapp.js";
 import { fetchNewEmailsFor, fetchForwardInbox } from "./mailer.js";
 import { processIncoming, sendRoundupFor, wakeSnoozed, flushPending, checkSilence, sendWeeklyReport } from "./engine.js";
-import { okx } from "./okx/config.js";
-import { mountServices, earnings } from "./okx/services.js";
-import { mountMockAsp } from "./okx/mockAsp.js";
-import { spentToday } from "./okx/ledger.js";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
@@ -24,22 +20,8 @@ app.use(express.json());
 app.use("/api", apiRouter());
 initWhatsApp(app);
 
-// ---- OKX.AI ASP layer ----
-mountServices(app);   // Tier 1: MAILER sells (triage, draft, fill) — x402 priced
-mountMockAsp(app);    // Tier 2: bundled scam-check counterparty — x402 priced
-app.get("/asp/status", (req, res) => {
-  res.json({
-    wallet: okx.walletAddress || "(not set)",
-    network: okx.network,
-    live: okx.isLive(),
-    seller: earnings(),
-    buyer: spentToday(),
-    scamCheck: { enabled: okx.scamCheck.enabled, endpoint: okx.scamCheck.endpoint, maxPrice: okx.scamCheck.maxPrice },
-  });
-});
-
 app.use(express.static(path.join(__dirname, "..", "public")));
-app.listen(config.port, () => console.log(`MAILER platform up at ${config.baseUrl} (port ${config.port})`));
+app.listen(config.port, () => console.log(`Mailer platform up at ${config.baseUrl} (port ${config.port})`));
 
 /* ---------- the one official bot ---------- */
 startTelegramBot();
@@ -64,7 +46,7 @@ async function pollAll() {
         await processIncoming(user, email);
       }
     }
-    // the shared forward-to-MAILER inbox
+    // the shared forward-to-Mailer inbox
     for (const { user, email } of await fetchForwardInbox()) {
       console.log(`[user ${user.id}] Forwarded email: ${email.subject}`);
       await processIncoming(user, email);

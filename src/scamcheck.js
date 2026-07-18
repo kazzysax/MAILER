@@ -1,7 +1,7 @@
 import { config } from "./config.js";
 
 /*
-Scam-risk scoring for incoming mail. MAILER never blocks a message — it
+Scam-risk scoring for incoming mail. Mailer never blocks a message — it
 flags the risk and lets the user decide. Cheap pre-filter first so we
 don't run the full check on obviously-safe mail, and known/trusted
 senders are skipped entirely so real correspondents never get flagged.
